@@ -61,6 +61,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+    implementation(libs.androidx.material.icons.extended)
 
     implementation(libs.tensorflow.lite)
     implementation(libs.tensorflow.lite.support)
@@ -68,13 +69,13 @@ dependencies {
     implementation(libs.tasks.vision)
 
     // The following line is optional, as the core library is included indirectly by camera-camera2
-    implementation("androidx.camera:camera-core:1.5.3")
-    implementation("androidx.camera:camera-camera2:1.5.3")
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
     // If you want to additionally use the CameraX Lifecycle library
-    implementation("androidx.camera:camera-lifecycle:1.5.3")
+    implementation(libs.androidx.camera.lifecycle)
     // If you want to additionally use the CameraX View class
-    implementation("androidx.camera:camera-view:1.5.3")
+    implementation(libs.androidx.camera.view)
     // If you want to additionally use the CameraX Extensions library
-    implementation("androidx.camera:camera-extensions:1.5.3")
+    implementation(libs.androidx.camera.extensions)
 
 }

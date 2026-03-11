@@ -21,7 +21,9 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -34,90 +36,124 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.security.Permissions
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.handtranslator.Helper.landmarksTo210Features
 import com.example.handtranslator.Helper.loadAslLabels
+import com.example.handtranslator.CameraFacing
+import com.example.handtranslator.MainScreen
 import com.google.mediapipe.tasks.components.containers.NormalizedLandmark
 import kotlinx.coroutines.withContext
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 
 class MainActivity : ComponentActivity() {
 
-    private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
-
-    private lateinit var previewView: PreviewView
-    private val cameraExecutor = Executors.newSingleThreadExecutor()
+    private var previewView: PreviewView? = null
+    private var cameraProvider: ProcessCameraProvider? = null
+    private lateinit var cameraExecutor: ExecutorService
     private lateinit var handLandmarkerHelper: HandLandmarkerHelper
     private lateinit var aslClassifier: AslClassifier
+    private var lastPredictionTime = 0L
+
+    private val requiredPermissions = arrayOf(Manifest.permission.CAMERA)
+    private var inputMode by mutableStateOf(InputMode.CAMERA)
+    private var showLandmarks by mutableStateOf(false)
+    private var cameraFacing by mutableStateOf(CameraFacing.FRONT)
+    private var recognizedText by mutableStateOf("Перевод появится здесь")
+    private var textInput by mutableStateOf("")
+    private var landmarks by mutableStateOf<List<NormalizedLandmark>>(emptyList())
 
     private val activityResultLauncher =
-        registerForActivityResult(
-            ActivityResultContracts.RequestMultiplePermissions())
-        { permissions ->
-            var permissionGranted = true
-            permissions.entries.forEach {
-                if (it.key in REQUIRED_PERMISSIONS && !it.value)
-                    permissionGranted = false
-            }
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            val permissionGranted = permissions.entries
+                .filter { it.key in requiredPermissions }
+                .all { it.value }
+
             if (!permissionGranted) {
-                Toast.makeText(baseContext,
-                    "Permission request denied",
-                    Toast.LENGTH_SHORT).show()
+                Toast.makeText(baseContext, "Permission request denied", Toast.LENGTH_SHORT).show()
             } else {
-                initializeCamera()
+                bindCameraUseCases()
             }
         }
-
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         handLandmarkerHelper = HandLandmarkerHelper(this)
         aslClassifier = AslClassifier(this)
+        cameraExecutor = Executors.newSingleThreadExecutor()
         setContent {
             HandTranslatorTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    CameraPreview(
-                        onPreviewViewCreated = {
-                            previewView = it
-                        }
-                    )
-                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-                        != PackageManager.PERMISSION_GRANTED) {
-                        activityResultLauncher.launch(REQUIRED_PERMISSIONS)
-                    }
-                    else {
-                        initializeCamera()
+                Scaffold { innerPadding ->
+                    Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+                        MainScreen(
+                            inputMode = inputMode,
+                            onInputModeChange = {
+                                inputMode = it
+                                if (it == InputMode.CAMERA) {
+                                    ensureCameraPermissionAndBind()
+                                } else {
+                                    cameraProvider?.unbindAll()
+                                    landmarks = emptyList()
+                                }
+                            },
+                            showLandmarks = showLandmarks,
+                            onShowLandmarksChange = { showLandmarks = it },
+                            cameraFacing = cameraFacing,
+                            onCameraFacingChange = {
+                                cameraFacing = it
+                                if (inputMode == InputMode.CAMERA) {
+                                    bindCameraUseCases()
+                                }
+                            },
+                            recognizedText = recognizedText,
+                            textInput = textInput,
+                            onTextInputChange = {
+                                textInput = it
+                                recognizedText = it
+                            },
+                            landmarks = landmarks,
+                            onPreviewViewReady = { view ->
+                                previewView = view
+                                if (inputMode == InputMode.CAMERA) {
+                                    ensureCameraPermissionAndBind()
+                                }
+                            }
+                        )
                     }
                 }
             }
         }
     }
 
-    private fun initializeCamera() {
+    private fun ensureCameraPermissionAndBind() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            activityResultLauncher.launch(requiredPermissions)
+        } else {
+            bindCameraUseCases()
+        }
+    }
+
+    private fun bindCameraUseCases() {
+        val currentPreviewView = previewView ?: return
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
         cameraProviderFuture.addListener({
-
-            val cameraProvider = cameraProviderFuture.get()
-
-            val preview = Preview.Builder()
-                .build()
-                .also {
-                    it.surfaceProvider = previewView.surfaceProvider
-                }
-
+            cameraProvider = cameraProviderFuture.get()
+            val preview = Preview.Builder().build().also {
+                it.surfaceProvider = currentPreviewView.surfaceProvider
+            }
             val imageAnalyzer = ImageAnalysis.Builder()
-                .setBackpressureStrategy(
-                    ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST
-                )
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build()
-                .also {
-                    it.setAnalyzer(
-                        cameraExecutor
-                    ) { imageProxy ->
+                .also { analyzer ->
+                    analyzer.setAnalyzer(cameraExecutor) { imageProxy ->
                         try {
                             processFrame(imageProxy)
                         } catch (e: Exception) {
@@ -127,23 +163,26 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
+            val cameraSelector = when (cameraFacing) {
+                CameraFacing.FRONT -> CameraSelector.DEFAULT_FRONT_CAMERA
+                CameraFacing.BACK -> CameraSelector.DEFAULT_BACK_CAMERA
+            }
 
-            val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
-
-            cameraProvider.unbindAll()
-
-            cameraProvider.bindToLifecycle(
-                this,
-                cameraSelector,
-                preview,
-                imageAnalyzer
-            )
-
+            cameraProvider?.unbindAll()
+            cameraProvider?.bindToLifecycle(this, cameraSelector, preview, imageAnalyzer)
         }, ContextCompat.getMainExecutor(this))
     }
 
+    private fun processFrame(imageProxy: ImageProxy) {
+        val detectedLandmarks = handLandmarkerHelper.detect(imageProxy)
+        runOnUiThread {
+            landmarks = detectedLandmarks.orEmpty()
+        }
 
-    private var lastPredictionTime = 0L
+        if (!detectedLandmarks.isNullOrEmpty()) {
+            processFrameWithPrediction(detectedLandmarks)
+        }
+    }
 
 
     fun processFrameWithPrediction(landmarks: List<NormalizedLandmark>) {
@@ -155,53 +194,23 @@ class MainActivity : ComponentActivity() {
         CoroutineScope(Dispatchers.Default).launch {
             val features = landmarksTo210Features(landmarks)
             val predictedIndex = aslClassifier.predict(features)
+            val aslLabels = loadAslLabels(this@MainActivity)
 
-            // Обновление UI в MainThread
-            withContext(Dispatchers.Main) {
-                Log.d("ASL", "Predicted letter index: $predictedIndex")
-                val aslLabels = loadAslLabels(this@MainActivity)
-
-                // Когда получаем индекс от модели:
-                val predictedIndex = aslClassifier.predict(features)
-
-                val predictedLetter = if (predictedIndex in aslLabels.indices) {
-                    aslLabels[predictedIndex]
-                } else {
-                    "?"
-                }
-
-                Log.d("ASL", "Predicted letter: $predictedLetter")
+            val predictedLetter = if (predictedIndex in aslLabels.indices) {
+                aslLabels[predictedIndex]
+            } else {
+                "?"
             }
-        }
-    }
 
-
-    private fun processFrame(imageProxy: ImageProxy) {
-        val landmarks = handLandmarkerHelper.detect(imageProxy)
-        if (landmarks != null) {
-            processFrameWithPrediction(landmarks)
+            withContext(Dispatchers.Main) {
+                recognizedText = predictedLetter
+            }
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        cameraProvider?.unbindAll()
         cameraExecutor.shutdown()
     }
-}
-
-@Composable
-fun CameraPreview(
-    modifier: Modifier = Modifier,
-    onPreviewViewCreated: (PreviewView) -> Unit
-) {
-    AndroidView(
-        modifier = modifier.fillMaxSize(),
-        factory = { context ->
-            PreviewView(context).apply {
-                scaleType = PreviewView.ScaleType.FILL_CENTER
-                implementationMode = PreviewView.ImplementationMode.COMPATIBLE
-                onPreviewViewCreated(this)
-            }
-        }
-    )
 }
