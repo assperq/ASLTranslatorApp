@@ -3,113 +3,75 @@ package com.example.handtranslator
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.ImageProxy
-import androidx.camera.core.Preview
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.view.PreviewView
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.ui.Modifier
-import androidx.core.content.ContextCompat
-import com.example.handtranslator.ui.theme.HandTranslatorTheme
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.example.handtranslator.Helper.landmarksTo210Features
-import com.example.handtranslator.Helper.loadAslLabels
-import com.example.handtranslator.translator.CameraFacing
+import androidx.compose.ui.Modifier
+import androidx.core.content.ContextCompat
 import com.example.handtranslator.translator.InputMode
 import com.example.handtranslator.translator.MainScreen
-import com.google.mediapipe.tasks.components.containers.NormalizedLandmark
-import kotlinx.coroutines.withContext
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-
+import com.example.handtranslator.ui.theme.HandTranslatorTheme
 
 class MainActivity : ComponentActivity() {
 
-    private var previewView: PreviewView? = null
-    private var cameraProvider: ProcessCameraProvider? = null
-    private lateinit var cameraExecutor: ExecutorService
-    private lateinit var handLandmarkerHelper: HandLandmarkerHelper
-    private lateinit var aslClassifier: AslClassifier
-    private var lastPredictionTime = 0L
-
+    private val viewModel: MainViewModel by viewModels()
     private val requiredPermissions = arrayOf(Manifest.permission.CAMERA)
-    private var inputMode by mutableStateOf(InputMode.CAMERA)
-    private var showLandmarks by mutableStateOf(false)
-    private var cameraFacing by mutableStateOf(CameraFacing.FRONT)
-    private var recognizedText by mutableStateOf("Перевод появится здесь")
-    private var textInput by mutableStateOf("")
-    private var landmarks by mutableStateOf<List<NormalizedLandmark>>(emptyList())
+    private var hasCameraPermission by mutableStateOf(false)
 
     private val activityResultLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-            val permissionGranted = permissions.entries
+            hasCameraPermission = permissions.entries
                 .filter { it.key in requiredPermissions }
                 .all { it.value }
 
-            if (!permissionGranted) {
+            if (!hasCameraPermission) {
                 Toast.makeText(baseContext, "Permission request denied", Toast.LENGTH_SHORT).show()
             } else {
-                bindCameraUseCases()
+                viewModel.onCameraPermissionGranted(this)
             }
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        handLandmarkerHelper = HandLandmarkerHelper(this)
-        aslClassifier = AslClassifier(this)
-        cameraExecutor = Executors.newSingleThreadExecutor()
+        hasCameraPermission = isCameraPermissionGranted()
+
         setContent {
             HandTranslatorTheme {
                 Scaffold { innerPadding ->
                     Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
                         MainScreen(
-                            inputMode = inputMode,
+                            inputMode = viewModel.inputMode,
                             onInputModeChange = {
-                                inputMode = it
-                                if (it == InputMode.CAMERA) {
-                                    ensureCameraPermissionAndBind()
-                                } else {
-                                    cameraProvider?.unbindAll()
-                                    landmarks = emptyList()
+                                viewModel.onInputModeChange(it, this, hasCameraPermission)
+                                if (it == InputMode.CAMERA && !hasCameraPermission) {
+                                    ensureCameraPermission()
                                 }
                             },
-                            showLandmarks = showLandmarks,
-                            onShowLandmarksChange = { showLandmarks = it },
-                            cameraFacing = cameraFacing,
+                            showLandmarks = viewModel.showLandmarks,
+                            onShowLandmarksChange = viewModel::onShowLandmarksChange,
+                            cameraFacing = viewModel.cameraFacing,
                             onCameraFacingChange = {
-                                cameraFacing = it
-                                if (inputMode == InputMode.CAMERA) {
-                                    bindCameraUseCases()
-                                }
+                                viewModel.onCameraFacingChange(it, this)
                             },
-                            recognizedText = recognizedText,
-                            textInput = textInput,
-                            onTextInputChange = {
-                                textInput = it
-                                recognizedText = it
-                            },
-                            landmarks = landmarks,
+                            recognizedText = viewModel.recognizedText,
+                            textInput = viewModel.textInput,
+                            onTextInputChange = viewModel::onTextInputChange,
+                            landmarks = viewModel.landmarks,
                             onPreviewViewReady = { view ->
-                                previewView = view
-                                if (inputMode == InputMode.CAMERA) {
-                                    ensureCameraPermissionAndBind()
+                                viewModel.onPreviewViewReady(view, this, hasCameraPermission)
+                                if (!hasCameraPermission) {
+                                    ensureCameraPermission()
                                 }
                             }
                         )
@@ -119,87 +81,21 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun ensureCameraPermissionAndBind() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            activityResultLauncher.launch(requiredPermissions)
+    private fun ensureCameraPermission() {
+        if (isCameraPermissionGranted()) {
+            hasCameraPermission = true
+            viewModel.onCameraPermissionGranted(this)
         } else {
-            bindCameraUseCases()
+            activityResultLauncher.launch(requiredPermissions)
         }
     }
 
-    private fun bindCameraUseCases() {
-        val currentPreviewView = previewView ?: return
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
-
-        cameraProviderFuture.addListener({
-            cameraProvider = cameraProviderFuture.get()
-            val preview = Preview.Builder().build().also {
-                it.surfaceProvider = currentPreviewView.surfaceProvider
-            }
-            val imageAnalyzer = ImageAnalysis.Builder()
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .build()
-                .also { analyzer ->
-                    analyzer.setAnalyzer(cameraExecutor) { imageProxy ->
-                        try {
-                            processFrame(imageProxy)
-                        } catch (e: Exception) {
-                            Log.e("Camera", "Analyzer error", e)
-                        } finally {
-                            imageProxy.close()
-                        }
-                    }
-                }
-            val cameraSelector = when (cameraFacing) {
-                CameraFacing.FRONT -> CameraSelector.DEFAULT_FRONT_CAMERA
-                CameraFacing.BACK -> CameraSelector.DEFAULT_BACK_CAMERA
-            }
-
-            cameraProvider?.unbindAll()
-            cameraProvider?.bindToLifecycle(this, cameraSelector, preview, imageAnalyzer)
-        }, ContextCompat.getMainExecutor(this))
-    }
-
-    private fun processFrame(imageProxy: ImageProxy) {
-        val detectedLandmarks = handLandmarkerHelper.detect(imageProxy)
-        runOnUiThread {
-            landmarks = detectedLandmarks.orEmpty()
-        }
-
-        if (!detectedLandmarks.isNullOrEmpty()) {
-            processFrameWithPrediction(detectedLandmarks)
-        }
-    }
-
-
-    fun processFrameWithPrediction(landmarks: List<NormalizedLandmark>) {
-        val currentTime = System.currentTimeMillis()
-        if (currentTime - lastPredictionTime < 1500) return // ждем 1.5 сек
-
-        lastPredictionTime = currentTime
-
-        CoroutineScope(Dispatchers.Default).launch {
-            val features = landmarksTo210Features(landmarks)
-            val predictedIndex = aslClassifier.predict(features)
-            val aslLabels = loadAslLabels(this@MainActivity)
-
-            val predictedLetter = if (predictedIndex in aslLabels.indices) {
-                aslLabels[predictedIndex]
-            } else {
-                "?"
-            }
-
-            withContext(Dispatchers.Main) {
-                recognizedText = predictedLetter
-            }
-        }
+    private fun isCameraPermissionGranted(): Boolean {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        cameraProvider?.unbindAll()
-        cameraExecutor.shutdown()
+        viewModel.stopCamera()
     }
 }
