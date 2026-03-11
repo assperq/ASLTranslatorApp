@@ -7,7 +7,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 object Helper {
-    suspend fun landmarksTo210Features(landmarks: List<NormalizedLandmark>): FloatArray {
+    fun landmarksTo210Features(landmarks: List<NormalizedLandmark>): FloatArray {
         val n = landmarks.size
         require(n == 21) { "Expected 21 landmarks" }
 

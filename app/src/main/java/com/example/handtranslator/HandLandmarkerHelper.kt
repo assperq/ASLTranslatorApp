@@ -12,8 +12,6 @@ import com.google.mediapipe.tasks.components.containers.NormalizedLandmark
 import com.google.mediapipe.tasks.core.BaseOptions
 import com.google.mediapipe.tasks.core.Delegate
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarker
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 
 class HandLandmarkerHelper(context: Context) {
 

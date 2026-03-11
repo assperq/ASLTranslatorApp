@@ -1,18 +1,20 @@
-package com.example.handtranslator
+package com.example.handtranslator.translator
 
-import android.R.attr.onClick
 import androidx.camera.view.PreviewView
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,9 +24,6 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,94 +37,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.zIndex
 import com.google.mediapipe.tasks.components.containers.NormalizedLandmark
-
-enum class InputMode {
-    CAMERA,
-    TEXT
-}
-
-enum class CameraFacing {
-    FRONT,
-    BACK
-}
+import kotlin.collections.forEach
 
 @Composable
-fun MainScreen(
-    inputMode: InputMode,
-    onInputModeChange: (InputMode) -> Unit,
-    showLandmarks: Boolean,
-    onShowLandmarksChange: (Boolean) -> Unit,
-    cameraFacing: CameraFacing,
-    onCameraFacingChange: (CameraFacing) -> Unit,
-    recognizedText: String,
-    textInput: String,
-    onTextInputChange: (String) -> Unit,
-    landmarks: List<NormalizedLandmark>,
-    onPreviewViewReady: (PreviewView) -> Unit
-) {
-    Surface(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-            InputModeSelector(inputMode = inputMode, onInputModeChange = onInputModeChange)
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1.35f),
-                    tonalElevation = 2.dp,
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    if (inputMode == InputMode.CAMERA) {
-                        CameraPanel(
-                            showLandmarks = showLandmarks,
-                            onShowLandmarksChange = onShowLandmarksChange,
-                            cameraFacing = cameraFacing,
-                            onCameraFacingChange = onCameraFacingChange,
-                            landmarks = if (showLandmarks) landmarks else emptyList(),
-                            onPreviewViewReady = onPreviewViewReady
-                        )
-                    } else {
-                        TextInputPanel(textInput = textInput, onTextInputChange = onTextInputChange)
-                    }
-                }
-
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    tonalElevation = 2.dp,
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    TranslationPanel(recognizedText = recognizedText)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun InputModeSelector(inputMode: InputMode, onInputModeChange: (InputMode) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        FilterChip(
-            selected = inputMode == InputMode.CAMERA,
-            onClick = { onInputModeChange(InputMode.CAMERA) },
-            label = { Text("Ввод с камеры") }
-        )
-        FilterChip(
-            selected = inputMode == InputMode.TEXT,
-            onClick = { onInputModeChange(InputMode.TEXT) },
-            label = { Text("Текстовый ввод") }
-        )
-    }
-}
-
-@Composable
-private fun CameraPanel(
+fun CameraPanel(
     showLandmarks: Boolean,
     onShowLandmarksChange: (Boolean) -> Unit,
     cameraFacing: CameraFacing,
@@ -164,15 +81,18 @@ private fun CameraPanel(
             }
         }
 
-        var iconModifier = Modifier.align(Alignment.TopEnd)
-            .padding(8.dp)
-        iconModifier = if (!controlsVisible)
-                iconModifier.background(Color.Black.copy(alpha = 0.45f),
-                    RoundedCornerShape(12.dp))
-            else iconModifier
+        val iconBackgroundColor by animateColorAsState(
+            targetValue = if (!controlsVisible) Color.Black.copy(alpha = 0.45f) else Color.Transparent,
+            animationSpec = tween(durationMillis = 220),
+            label = "cameraMenuIconBackground"
+        )
 
         IconButton(
-            modifier = iconModifier,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(8.dp)
+                .zIndex(2f)
+                .background(iconBackgroundColor, RoundedCornerShape(12.dp)),
             onClick = { controlsVisible = !controlsVisible }
         ) {
             Icon(
@@ -182,7 +102,11 @@ private fun CameraPanel(
             )
         }
 
-        if (controlsVisible) {
+        AnimatedVisibility(
+            visible = controlsVisible,
+            enter = fadeIn() + slideInVertically(initialOffsetY = { -it / 2 }),
+            exit = fadeOut() + slideOutVertically(targetOffsetY = { -it / 2 })
+        ) {
             Column(
                 modifier = Modifier
                     .align(Alignment.TopStart)
@@ -227,32 +151,5 @@ private fun CameraPanel(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun TextInputPanel(textInput: String, onTextInputChange: (String) -> Unit) {
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text("Введите текст для перевода", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(12.dp))
-        OutlinedTextField(
-            modifier = Modifier.fillMaxWidth(),
-            value = textInput,
-            onValueChange = onTextInputChange,
-            label = { Text("Текст") }
-        )
-    }
-}
-
-@Composable
-private fun TranslationPanel(recognizedText: String) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
-            .padding(16.dp)
-    ) {
-        Text("Перевод", style = MaterialTheme.typography.titleLarge)
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(recognizedText, style = MaterialTheme.typography.displaySmall)
     }
 }
