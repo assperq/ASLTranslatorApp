@@ -8,7 +8,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -20,11 +19,13 @@ import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import com.example.handtranslator.translator.InputMode
 import com.example.handtranslator.translator.MainScreen
+import com.example.handtranslator.translator.TranslatorViewModel
 import com.example.handtranslator.ui.theme.HandTranslatorTheme
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity : ComponentActivity() {
 
-    private val viewModel: MainViewModel by viewModels()
+    private val viewModel: TranslatorViewModel by viewModel()
     private val requiredPermissions = arrayOf(Manifest.permission.CAMERA)
     private var hasCameraPermission by mutableStateOf(false)
 
@@ -53,7 +54,7 @@ class MainActivity : ComponentActivity() {
                         MainScreen(
                             inputMode = viewModel.inputMode,
                             onInputModeChange = {
-                                viewModel.onInputModeChange(it, this, hasCameraPermission)
+                                viewModel.onInputModeChange(it, this@MainActivity, hasCameraPermission)
                                 if (it == InputMode.CAMERA && !hasCameraPermission) {
                                     ensureCameraPermission()
                                 }
@@ -62,14 +63,14 @@ class MainActivity : ComponentActivity() {
                             onShowLandmarksChange = viewModel::onShowLandmarksChange,
                             cameraFacing = viewModel.cameraFacing,
                             onCameraFacingChange = {
-                                viewModel.onCameraFacingChange(it, this)
+                                viewModel.onCameraFacingChange(it, this@MainActivity)
                             },
                             recognizedText = viewModel.recognizedText,
                             textInput = viewModel.textInput,
                             onTextInputChange = viewModel::onTextInputChange,
                             landmarks = viewModel.landmarks,
                             onPreviewViewReady = { view ->
-                                viewModel.onPreviewViewReady(view, this, hasCameraPermission)
+                                viewModel.onPreviewViewReady(view, this@MainActivity, hasCameraPermission)
                                 if (!hasCameraPermission) {
                                     ensureCameraPermission()
                                 }

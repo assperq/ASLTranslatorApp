@@ -1,5 +1,7 @@
-package com.example.handtranslator
+package com.example.handtranslator.translator
 
+import com.example.handtranslator.AslClassifier
+import com.example.handtranslator.HandLandmarkerHelper
 import android.app.Application
 import android.util.Log
 import androidx.camera.core.CameraSelector
@@ -13,6 +15,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
 import com.example.handtranslator.Helper.landmarksTo210Features
 import com.example.handtranslator.Helper.loadAslLabels
@@ -22,12 +25,13 @@ import com.google.mediapipe.tasks.components.containers.NormalizedLandmark
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.lang.ref.WeakReference
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class MainViewModel(application: Application) : AndroidViewModel(application) {
+class TranslatorViewModel(application: Application) : AndroidViewModel(application) {
 
-    private var previewView: PreviewView? = null
+    private var previewView: WeakReference<PreviewView?> = WeakReference(null)
     private var cameraProvider: ProcessCameraProvider? = null
     private val cameraExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private val handLandmarkerHelper = HandLandmarkerHelper(application.applicationContext)
@@ -75,7 +79,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onPreviewViewReady(view: PreviewView, lifecycleOwner: LifecycleOwner, hasCameraPermission: Boolean) {
-        previewView = view
+        previewView = WeakReference(view)
         if (inputMode == InputMode.CAMERA && hasCameraPermission) {
             bindCameraUseCases(lifecycleOwner)
         }
@@ -92,7 +96,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun bindCameraUseCases(lifecycleOwner: LifecycleOwner) {
-        val currentPreviewView = previewView ?: return
+        val currentPreviewView = previewView.get() ?: return
         val cameraProviderFuture = ProcessCameraProvider.getInstance(getApplication())
 
         cameraProviderFuture.addListener({

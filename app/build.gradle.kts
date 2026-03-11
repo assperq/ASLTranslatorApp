@@ -78,4 +78,12 @@ dependencies {
     // If you want to additionally use the CameraX Extensions library
     implementation(libs.androidx.camera.extensions)
 
+
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.koin.core)
+    testImplementation(libs.koin.test)
+    implementation(libs.koin.androidx.compose)
+    implementation(libs.koin.androidx.compose.viewmodel)
+    implementation(libs.koin.android)
+
 }
