@@ -74,7 +74,10 @@ class MainActivity : ComponentActivity() {
                                 if (!hasCameraPermission) {
                                     ensureCameraPermission()
                                 }
-                            }
+                            },
+                            onTorchEnabledChange = viewModel::onTorchEnabledChange,
+                            isTorchEnabled = viewModel.isTorchEnabled,
+                            isTorchSupported = viewModel.isTorchSupported
                         )
                     }
                 }

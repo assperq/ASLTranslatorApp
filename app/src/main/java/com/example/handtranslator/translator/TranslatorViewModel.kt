@@ -4,6 +4,7 @@ import com.example.handtranslator.AslClassifier
 import com.example.handtranslator.HandLandmarkerHelper
 import android.app.Application
 import android.util.Log
+import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
@@ -15,12 +16,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
 import com.example.handtranslator.Helper.landmarksTo210Features
 import com.example.handtranslator.Helper.loadAslLabels
-import com.example.handtranslator.translator.CameraFacing
-import com.example.handtranslator.translator.InputMode
 import com.google.mediapipe.tasks.components.containers.NormalizedLandmark
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -38,6 +36,12 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
     private val aslClassifier = AslClassifier(application.applicationContext)
     private val aslLabels by lazy { loadAslLabels(application.applicationContext) }
     private var lastPredictionTime = 0L
+    private var activeCamera: Camera? = null
+
+    var isTorchSupported by mutableStateOf(false)
+        private set
+    var isTorchEnabled by mutableStateOf(false)
+        private set
 
     var inputMode by mutableStateOf(InputMode.CAMERA)
         private set
@@ -60,6 +64,11 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
             stopCamera()
             landmarks = emptyList()
         }
+    }
+
+    fun onTorchEnabledChange(enabled: Boolean) {
+        isTorchEnabled = enabled
+        activeCamera?.cameraControl?.enableTorch(enabled)
     }
 
     fun onShowLandmarksChange(show: Boolean) {
@@ -93,6 +102,9 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
 
     fun stopCamera() {
         cameraProvider?.unbindAll()
+        activeCamera = null
+        isTorchSupported = false
+        isTorchEnabled = false
     }
 
     private fun bindCameraUseCases(lifecycleOwner: LifecycleOwner) {
@@ -126,7 +138,12 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
             }
 
             cameraProvider?.unbindAll()
-            cameraProvider?.bindToLifecycle(lifecycleOwner, cameraSelector, preview, imageAnalyzer)
+            activeCamera = cameraProvider?.bindToLifecycle(lifecycleOwner, cameraSelector, preview, imageAnalyzer)
+            isTorchSupported = activeCamera?.cameraInfo?.hasFlashUnit() == true
+            if (!isTorchSupported) {
+                isTorchEnabled = false
+            }
+            activeCamera?.cameraControl?.enableTorch(isTorchEnabled && isTorchSupported)
         }, androidx.core.content.ContextCompat.getMainExecutor(getApplication()))
     }
 

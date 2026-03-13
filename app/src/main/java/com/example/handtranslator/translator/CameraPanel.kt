@@ -47,6 +47,9 @@ fun CameraPanel(
     onShowLandmarksChange: (Boolean) -> Unit,
     cameraFacing: CameraFacing,
     onCameraFacingChange: (CameraFacing) -> Unit,
+    isTorchSupported: Boolean,
+    isTorchEnabled: Boolean,
+    onTorchEnabledChange: (Boolean) -> Unit,
     landmarks: List<NormalizedLandmark>,
     onPreviewViewReady: (PreviewView) -> Unit
 ) {
@@ -127,6 +130,16 @@ fun CameraPanel(
                 ) {
                     Text("Показывать точки MediaPipe", color = Color.White)
                     Switch(checked = showLandmarks, onCheckedChange = onShowLandmarksChange)
+                }
+
+                if (cameraFacing == CameraFacing.BACK && isTorchSupported) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text("Фонарик", color = Color.White)
+                        Switch(checked = isTorchEnabled, onCheckedChange = onTorchEnabledChange)
+                    }
                 }
 
                 FilterChip(

@@ -1,5 +1,6 @@
 package com.example.handtranslator.translator
 
+import android.content.res.Configuration
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -14,8 +15,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -42,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
@@ -56,6 +60,9 @@ fun MainScreen(
     onShowLandmarksChange: (Boolean) -> Unit,
     cameraFacing: CameraFacing,
     onCameraFacingChange: (CameraFacing) -> Unit,
+    isTorchSupported: Boolean,
+    isTorchEnabled: Boolean,
+    onTorchEnabledChange: (Boolean) -> Unit,
     recognizedText: String,
     textInput: String,
     onTextInputChange: (String) -> Unit,
@@ -67,46 +74,109 @@ fun MainScreen(
             InputModeSelector(inputMode = inputMode, onInputModeChange = onInputModeChange)
             Spacer(modifier = Modifier.height(16.dp))
 
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1.35f),
-                    tonalElevation = 2.dp,
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    if (inputMode == InputMode.CAMERA) {
-                        CameraPanel(
+            when (LocalConfiguration.current.orientation) {
+
+                Configuration.ORIENTATION_LANDSCAPE -> {
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        MainContent(
+                            inputMode = inputMode,
                             showLandmarks = showLandmarks,
                             onShowLandmarksChange = onShowLandmarksChange,
                             cameraFacing = cameraFacing,
                             onCameraFacingChange = onCameraFacingChange,
-                            landmarks = if (showLandmarks) landmarks else emptyList(),
-                            onPreviewViewReady = onPreviewViewReady
+                            isTorchSupported = isTorchSupported,
+                            isTorchEnabled = isTorchEnabled,
+                            onTorchEnabledChange = onTorchEnabledChange,
+                            recognizedText = recognizedText,
+                            textInput = textInput,
+                            onTextInputChange = onTextInputChange,
+                            landmarks = landmarks,
+                            onPreviewViewReady = onPreviewViewReady,
+                            modifier = Modifier.fillMaxHeight()
                         )
-                    } else {
-                        TextInputPanel(textInput = textInput, onTextInputChange = onTextInputChange)
                     }
                 }
 
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    tonalElevation = 2.dp,
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    TranslationPanel(recognizedText = recognizedText)
+                else -> {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        MainContent(
+                            inputMode = inputMode,
+                            showLandmarks = showLandmarks,
+                            onShowLandmarksChange = onShowLandmarksChange,
+                            cameraFacing = cameraFacing,
+                            onCameraFacingChange = onCameraFacingChange,
+                            isTorchSupported = isTorchSupported,
+                            isTorchEnabled = isTorchEnabled,
+                            onTorchEnabledChange = onTorchEnabledChange,
+                            recognizedText = recognizedText,
+                            textInput = textInput,
+                            onTextInputChange = onTextInputChange,
+                            landmarks = landmarks,
+                            onPreviewViewReady = onPreviewViewReady,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
+
         }
     }
 }
 
+@Composable
+fun MainContent(
+    inputMode: InputMode,
+    showLandmarks: Boolean,
+    onShowLandmarksChange: (Boolean) -> Unit,
+    cameraFacing: CameraFacing,
+    onCameraFacingChange: (CameraFacing) -> Unit,
+    isTorchSupported: Boolean,
+    isTorchEnabled: Boolean,
+    onTorchEnabledChange: (Boolean) -> Unit,
+    recognizedText: String,
+    textInput: String,
+    onTextInputChange: (String) -> Unit,
+    landmarks: List<NormalizedLandmark>,
+    onPreviewViewReady: (PreviewView) -> Unit,
+    modifier: Modifier = Modifier
+)
+{
+    Surface(
+        modifier = modifier,
+        tonalElevation = 2.dp,
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        if (inputMode == InputMode.CAMERA) {
+            CameraPanel(
+                showLandmarks = showLandmarks,
+                onShowLandmarksChange = onShowLandmarksChange,
+                cameraFacing = cameraFacing,
+                onCameraFacingChange = onCameraFacingChange,
+                landmarks = if (showLandmarks) landmarks else emptyList(),
+                onPreviewViewReady = onPreviewViewReady,
+                isTorchSupported = isTorchSupported,
+                isTorchEnabled = isTorchEnabled,
+                onTorchEnabledChange = onTorchEnabledChange
+            )
+        } else {
+            TextInputPanel(textInput = textInput, onTextInputChange = onTextInputChange)
+        }
+    }
 
+    Surface(
+        modifier = modifier,
+        tonalElevation = 2.dp,
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        TranslationPanel(recognizedText = recognizedText)
+    }
+}
 
 
 
