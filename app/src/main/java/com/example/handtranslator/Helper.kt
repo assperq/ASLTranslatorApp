@@ -54,4 +54,15 @@ object Helper {
             emptyList()
         }
     }
+
+    fun getAslDrawable(context: Context, letter: String): Int {
+
+        val name = "asl_${letter.lowercase()}"
+
+        return context.resources.getIdentifier(
+            name,
+            "drawable",
+            context.packageName
+        )
+    }
 }

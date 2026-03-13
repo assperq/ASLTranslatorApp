@@ -16,7 +16,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
+import com.example.handtranslator.Helper.getAslDrawable
 import com.example.handtranslator.Helper.landmarksTo210Features
 import com.example.handtranslator.Helper.loadAslLabels
 import com.google.mediapipe.tasks.components.containers.NormalizedLandmark
@@ -49,7 +51,7 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
         private set
     var cameraFacing by mutableStateOf(CameraFacing.FRONT)
         private set
-    var recognizedText by mutableStateOf("Перевод появится здесь")
+    var recognizedText by mutableStateOf(emptyList<Letter>())
         private set
     var textInput by mutableStateOf("")
         private set
@@ -64,6 +66,27 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
             stopCamera()
             landmarks = emptyList()
         }
+    }
+
+    fun onClearRecognizedText(oneLetter: Boolean) {
+        recognizedText = if (oneLetter) {
+            val newList = recognizedText.toMutableList()
+            newList.remove(recognizedText.last())
+            newList
+        }
+        else {
+            emptyList()
+        }
+    }
+
+    fun onRecognizeLetter(recognizedLetter : String) {
+        val newLetter = Letter(
+            name = recognizedLetter,
+            imageCard = getAslDrawable(getApplication(), recognizedLetter)
+        )
+        val newList = recognizedText.toMutableList()
+        newList.add(newLetter)
+        recognizedText = newList
     }
 
     fun onTorchEnabledChange(enabled: Boolean) {
@@ -84,7 +107,9 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
 
     fun onTextInputChange(text: String) {
         textInput = text
-        recognizedText = text
+        text.forEach {
+            onRecognizeLetter(it.toString())
+        }
     }
 
     fun onPreviewViewReady(view: PreviewView, lifecycleOwner: LifecycleOwner, hasCameraPermission: Boolean) {
@@ -173,7 +198,7 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
                 "?"
             }
             withContext(Dispatchers.Main) {
-                recognizedText += predictedLetter
+                onRecognizeLetter(predictedLetter)
             }
         }
     }

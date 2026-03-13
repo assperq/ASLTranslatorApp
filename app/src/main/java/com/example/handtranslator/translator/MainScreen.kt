@@ -63,11 +63,12 @@ fun MainScreen(
     isTorchSupported: Boolean,
     isTorchEnabled: Boolean,
     onTorchEnabledChange: (Boolean) -> Unit,
-    recognizedText: String,
+    recognizedText: List<Letter>,
     textInput: String,
     onTextInputChange: (String) -> Unit,
     landmarks: List<NormalizedLandmark>,
-    onPreviewViewReady: (PreviewView) -> Unit
+    onPreviewViewReady: (PreviewView) -> Unit,
+    onClearRecognizedText: (Boolean) -> Unit
 ) {
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
@@ -95,7 +96,8 @@ fun MainScreen(
                             onTextInputChange = onTextInputChange,
                             landmarks = landmarks,
                             onPreviewViewReady = onPreviewViewReady,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            onClearRecognizedText = onClearRecognizedText
                         )
                     }
                 }
@@ -119,7 +121,8 @@ fun MainScreen(
                             onTextInputChange = onTextInputChange,
                             landmarks = landmarks,
                             onPreviewViewReady = onPreviewViewReady,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            onClearRecognizedText = onClearRecognizedText
                         )
                     }
                 }
@@ -139,12 +142,13 @@ fun MainContent(
     isTorchSupported: Boolean,
     isTorchEnabled: Boolean,
     onTorchEnabledChange: (Boolean) -> Unit,
-    recognizedText: String,
+    recognizedText: List<Letter>,
     textInput: String,
     onTextInputChange: (String) -> Unit,
     landmarks: List<NormalizedLandmark>,
     onPreviewViewReady: (PreviewView) -> Unit,
-    modifier: Modifier = Modifier
+    onClearRecognizedText: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -180,7 +184,7 @@ fun MainContent(
         tonalElevation = 2.dp,
         shape = RoundedCornerShape(16.dp)
     ) {
-        TranslationPanel(recognizedText)
+        TranslationPanel(recognizedText, onClearRecognizedText)
     }
 }
 

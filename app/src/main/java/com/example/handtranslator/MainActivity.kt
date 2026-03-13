@@ -77,7 +77,8 @@ class MainActivity : ComponentActivity() {
                             },
                             onTorchEnabledChange = viewModel::onTorchEnabledChange,
                             isTorchEnabled = viewModel.isTorchEnabled,
-                            isTorchSupported = viewModel.isTorchSupported
+                            isTorchSupported = viewModel.isTorchSupported,
+                            onClearRecognizedText = viewModel::onClearRecognizedText
                         )
                     }
                 }
