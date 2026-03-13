@@ -173,7 +173,7 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
                 "?"
             }
             withContext(Dispatchers.Main) {
-                recognizedText = predictedLetter
+                recognizedText += predictedLetter
             }
         }
     }

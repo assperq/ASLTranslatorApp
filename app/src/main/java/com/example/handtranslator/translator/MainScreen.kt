@@ -95,7 +95,7 @@ fun MainScreen(
                             onTextInputChange = onTextInputChange,
                             landmarks = landmarks,
                             onPreviewViewReady = onPreviewViewReady,
-                            modifier = Modifier.fillMaxHeight()
+                            modifier = Modifier.weight(1f)
                         )
                     }
                 }
@@ -119,7 +119,7 @@ fun MainScreen(
                             onTextInputChange = onTextInputChange,
                             landmarks = landmarks,
                             onPreviewViewReady = onPreviewViewReady,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.weight(1f)
                         )
                     }
                 }
@@ -145,14 +145,15 @@ fun MainContent(
     landmarks: List<NormalizedLandmark>,
     onPreviewViewReady: (PreviewView) -> Unit,
     modifier: Modifier = Modifier
-)
-{
+) {
     Surface(
-        modifier = modifier,
+        modifier = modifier.fillMaxSize(),
         tonalElevation = 2.dp,
         shape = RoundedCornerShape(16.dp)
     ) {
+
         if (inputMode == InputMode.CAMERA) {
+
             CameraPanel(
                 showLandmarks = showLandmarks,
                 onShowLandmarksChange = onShowLandmarksChange,
@@ -164,17 +165,22 @@ fun MainContent(
                 isTorchEnabled = isTorchEnabled,
                 onTorchEnabledChange = onTorchEnabledChange
             )
+
         } else {
-            TextInputPanel(textInput = textInput, onTextInputChange = onTextInputChange)
+
+            TextInputPanel(
+                textInput = textInput,
+                onTextInputChange = onTextInputChange
+            )
         }
     }
 
     Surface(
-        modifier = modifier,
+        modifier = modifier.fillMaxWidth(),
         tonalElevation = 2.dp,
         shape = RoundedCornerShape(16.dp)
     ) {
-        TranslationPanel(recognizedText = recognizedText)
+        TranslationPanel(recognizedText)
     }
 }
 

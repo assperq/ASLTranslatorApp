@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cameraswitch
@@ -53,7 +54,7 @@ fun CameraPanel(
     landmarks: List<NormalizedLandmark>,
     onPreviewViewReady: (PreviewView) -> Unit
 ) {
-    var controlsVisible by rememberSaveable { mutableStateOf(true) }
+    var controlsVisible by rememberSaveable { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         AndroidView(
@@ -110,58 +111,61 @@ fun CameraPanel(
             enter = fadeIn() + slideInVertically(initialOffsetY = { -it / 2 }),
             exit = fadeOut() + slideOutVertically(targetOffsetY = { -it / 2 })
         ) {
-            Column(
+            LazyColumn(
                 modifier = Modifier
-                    .align(Alignment.TopStart)
+                    .align(Alignment.TopEnd)
                     .padding(12.dp)
                     .background(Color.Black.copy(alpha = 0.45f), RoundedCornerShape(12.dp))
                     .padding(10.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                FilterChip(
-                    selected = false,
-                    onClick = { },
-                    label = { Text("Выбор фото/видео") }
-                )
+                item {
+                    FilterChip(
+                        selected = false,
+                        onClick = { },
+                        label = { Text("Выбор фото/видео") }
+                    )
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text("Показывать точки MediaPipe", color = Color.White)
-                    Switch(checked = showLandmarks, onCheckedChange = onShowLandmarksChange)
-                }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text("Показывать точки MediaPipe", color = Color.White)
+                        Switch(checked = showLandmarks, onCheckedChange = onShowLandmarksChange)
+                    }
 
-                if (cameraFacing == CameraFacing.BACK && isTorchSupported) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text("Фонарик", color = Color.White)
-                        Switch(checked = isTorchEnabled, onCheckedChange = onTorchEnabledChange)
+                        Switch(checked = isTorchEnabled,
+                            onCheckedChange = onTorchEnabledChange,
+                            enabled = cameraFacing == CameraFacing.BACK && isTorchSupported
+                        )
                     }
-                }
 
-                FilterChip(
-                    selected = cameraFacing == CameraFacing.FRONT,
-                    onClick = {
-                        onCameraFacingChange(
-                            if (cameraFacing == CameraFacing.FRONT) CameraFacing.BACK else CameraFacing.FRONT
-                        )
-                    },
-                    label = {
-                        Text(
-                            if (cameraFacing == CameraFacing.FRONT) "Фронтальная камера" else "Задняя камера"
-                        )
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Cameraswitch,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                )
+                    FilterChip(
+                        selected = cameraFacing == CameraFacing.FRONT,
+                        onClick = {
+                            onCameraFacingChange(
+                                if (cameraFacing == CameraFacing.FRONT) CameraFacing.BACK else CameraFacing.FRONT
+                            )
+                        },
+                        label = {
+                            Text(
+                                if (cameraFacing == CameraFacing.FRONT) "Фронтальная камера" else "Задняя камера"
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Cameraswitch,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    )
+                }
             }
         }
     }

@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun TextInputPanel(textInput: String, onTextInputChange: (String) -> Unit) {
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
         Text("Введите текст для перевода", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(12.dp))
         OutlinedTextField(
