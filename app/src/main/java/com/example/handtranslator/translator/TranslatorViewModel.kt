@@ -3,6 +3,7 @@ package com.example.handtranslator.translator
 import com.example.handtranslator.AslClassifier
 import com.example.handtranslator.HandLandmarkerHelper
 import android.app.Application
+import android.net.Uri
 import android.util.Log
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
@@ -26,6 +27,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.lang.ref.WeakReference
+import java.net.URI
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -123,6 +125,10 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
         if (inputMode == InputMode.CAMERA) {
             bindCameraUseCases(lifecycleOwner)
         }
+    }
+
+    fun onSelectPhoto(uri: Uri) {
+
     }
 
     fun stopCamera() {

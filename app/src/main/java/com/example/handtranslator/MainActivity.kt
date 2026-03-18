@@ -78,7 +78,8 @@ class MainActivity : ComponentActivity() {
                             onTorchEnabledChange = viewModel::onTorchEnabledChange,
                             isTorchEnabled = viewModel.isTorchEnabled,
                             isTorchSupported = viewModel.isTorchSupported,
-                            onClearRecognizedText = viewModel::onClearRecognizedText
+                            onClearRecognizedText = viewModel::onClearRecognizedText,
+                            onSelectPhoto = viewModel::onSelectPhoto
                         )
                     }
                 }

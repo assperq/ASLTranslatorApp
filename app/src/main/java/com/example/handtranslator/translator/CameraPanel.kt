@@ -1,5 +1,9 @@
 package com.example.handtranslator.translator
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -22,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -52,9 +57,17 @@ fun CameraPanel(
     isTorchEnabled: Boolean,
     onTorchEnabledChange: (Boolean) -> Unit,
     landmarks: List<NormalizedLandmark>,
-    onPreviewViewReady: (PreviewView) -> Unit
+    onPreviewViewReady: (PreviewView) -> Unit,
+    onSelectPhoto: (Uri) -> Unit
 ) {
     var controlsVisible by rememberSaveable { mutableStateOf(false) }
+    val mediaPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            onSelectPhoto(uri)
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         AndroidView(
@@ -120,11 +133,17 @@ fun CameraPanel(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 item {
-                    FilterChip(
-                        selected = false,
-                        onClick = { },
-                        label = { Text("Выбор фото/видео") }
-                    )
+                    Button(
+                        onClick = {
+                            mediaPickerLauncher.launch(
+                                PickVisualMediaRequest(
+                                    ActivityResultContracts.PickVisualMedia.ImageAndVideo
+                                )
+                            )
+                        }
+                    ) {
+                        Text("Выбор фото/видео")
+                    }
 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,

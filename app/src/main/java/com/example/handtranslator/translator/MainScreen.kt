@@ -1,6 +1,7 @@
 package com.example.handtranslator.translator
 
 import android.content.res.Configuration
+import android.net.Uri
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -68,7 +69,8 @@ fun MainScreen(
     onTextInputChange: (String) -> Unit,
     landmarks: List<NormalizedLandmark>,
     onPreviewViewReady: (PreviewView) -> Unit,
-    onClearRecognizedText: (Boolean) -> Unit
+    onClearRecognizedText: (Boolean) -> Unit,
+    onSelectPhoto: (Uri) -> Unit
 ) {
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
@@ -97,7 +99,8 @@ fun MainScreen(
                             landmarks = landmarks,
                             onPreviewViewReady = onPreviewViewReady,
                             modifier = Modifier.weight(1f),
-                            onClearRecognizedText = onClearRecognizedText
+                            onClearRecognizedText = onClearRecognizedText,
+                            onSelectPhoto = onSelectPhoto
                         )
                     }
                 }
@@ -122,7 +125,8 @@ fun MainScreen(
                             landmarks = landmarks,
                             onPreviewViewReady = onPreviewViewReady,
                             modifier = Modifier.weight(1f),
-                            onClearRecognizedText = onClearRecognizedText
+                            onClearRecognizedText = onClearRecognizedText,
+                            onSelectPhoto = onSelectPhoto
                         )
                     }
                 }
@@ -148,6 +152,7 @@ fun MainContent(
     landmarks: List<NormalizedLandmark>,
     onPreviewViewReady: (PreviewView) -> Unit,
     onClearRecognizedText: (Boolean) -> Unit,
+    onSelectPhoto: (Uri) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -167,7 +172,8 @@ fun MainContent(
                 onPreviewViewReady = onPreviewViewReady,
                 isTorchSupported = isTorchSupported,
                 isTorchEnabled = isTorchEnabled,
-                onTorchEnabledChange = onTorchEnabledChange
+                onTorchEnabledChange = onTorchEnabledChange,
+                onSelectPhoto = onSelectPhoto
             )
 
         } else {
