@@ -57,6 +57,9 @@ import com.google.mediapipe.tasks.components.containers.NormalizedLandmark
 fun MainScreen(
     inputMode: InputMode,
     onInputModeChange: (InputMode) -> Unit,
+    cameraContentMode: CameraContentMode,
+    selectedMediaUri: Uri?,
+    selectedMediaType: SelectedMediaType,
     showLandmarks: Boolean,
     onShowLandmarksChange: (Boolean) -> Unit,
     cameraFacing: CameraFacing,
@@ -70,7 +73,8 @@ fun MainScreen(
     landmarks: List<NormalizedLandmark>,
     onPreviewViewReady: (PreviewView) -> Unit,
     onClearRecognizedText: (Boolean) -> Unit,
-    onSelectPhoto: (Uri) -> Unit
+    onSelectMedia: (Uri) -> Unit,
+    onSwitchToCameraPreview: () -> Unit
 ) {
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
@@ -86,6 +90,9 @@ fun MainScreen(
                     ) {
                         MainContent(
                             inputMode = inputMode,
+                            cameraContentMode = cameraContentMode,
+                            selectedMediaUri = selectedMediaUri,
+                            selectedMediaType = selectedMediaType,
                             showLandmarks = showLandmarks,
                             onShowLandmarksChange = onShowLandmarksChange,
                             cameraFacing = cameraFacing,
@@ -100,7 +107,8 @@ fun MainScreen(
                             onPreviewViewReady = onPreviewViewReady,
                             modifier = Modifier.weight(1f),
                             onClearRecognizedText = onClearRecognizedText,
-                            onSelectPhoto = onSelectPhoto
+                            onSelectMedia = onSelectMedia,
+                            onSwitchToCameraPreview = onSwitchToCameraPreview
                         )
                     }
                 }
@@ -112,6 +120,9 @@ fun MainScreen(
                     ) {
                         MainContent(
                             inputMode = inputMode,
+                            cameraContentMode = cameraContentMode,
+                            selectedMediaUri = selectedMediaUri,
+                            selectedMediaType = selectedMediaType,
                             showLandmarks = showLandmarks,
                             onShowLandmarksChange = onShowLandmarksChange,
                             cameraFacing = cameraFacing,
@@ -126,7 +137,8 @@ fun MainScreen(
                             onPreviewViewReady = onPreviewViewReady,
                             modifier = Modifier.weight(1f),
                             onClearRecognizedText = onClearRecognizedText,
-                            onSelectPhoto = onSelectPhoto
+                            onSelectMedia = onSelectMedia,
+                            onSwitchToCameraPreview = onSwitchToCameraPreview
                         )
                     }
                 }
@@ -139,6 +151,9 @@ fun MainScreen(
 @Composable
 fun MainContent(
     inputMode: InputMode,
+    cameraContentMode: CameraContentMode,
+    selectedMediaUri: Uri?,
+    selectedMediaType: SelectedMediaType,
     showLandmarks: Boolean,
     onShowLandmarksChange: (Boolean) -> Unit,
     cameraFacing: CameraFacing,
@@ -152,7 +167,8 @@ fun MainContent(
     landmarks: List<NormalizedLandmark>,
     onPreviewViewReady: (PreviewView) -> Unit,
     onClearRecognizedText: (Boolean) -> Unit,
-    onSelectPhoto: (Uri) -> Unit,
+    onSelectMedia: (Uri) -> Unit,
+    onSwitchToCameraPreview: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -160,31 +176,35 @@ fun MainContent(
         tonalElevation = 2.dp,
         shape = RoundedCornerShape(16.dp)
     ) {
-
         if (inputMode == InputMode.CAMERA) {
-
-            CameraPanel(
-                showLandmarks = showLandmarks,
-                onShowLandmarksChange = onShowLandmarksChange,
-                cameraFacing = cameraFacing,
-                onCameraFacingChange = onCameraFacingChange,
-                landmarks = if (showLandmarks) landmarks else emptyList(),
-                onPreviewViewReady = onPreviewViewReady,
-                isTorchSupported = isTorchSupported,
-                isTorchEnabled = isTorchEnabled,
-                onTorchEnabledChange = onTorchEnabledChange,
-                onSelectPhoto = onSelectPhoto
-            )
-
+            if (cameraContentMode == CameraContentMode.LIVE_CAMERA) {
+                CameraPanel(
+                    showLandmarks = showLandmarks,
+                    onShowLandmarksChange = onShowLandmarksChange,
+                    cameraFacing = cameraFacing,
+                    onCameraFacingChange = onCameraFacingChange,
+                    landmarks = if (showLandmarks) landmarks else emptyList(),
+                    onPreviewViewReady = onPreviewViewReady,
+                    isTorchSupported = isTorchSupported,
+                    isTorchEnabled = isTorchEnabled,
+                    onTorchEnabledChange = onTorchEnabledChange,
+                    onSelectMedia = onSelectMedia
+                )
+            } else {
+                MediaPanel(
+                    selectedMediaUri = selectedMediaUri,
+                    selectedMediaType = selectedMediaType,
+                    onSelectMedia = onSelectMedia,
+                    onSwitchToCameraPreview = onSwitchToCameraPreview
+                )
+            }
         } else {
-
             TextInputPanel(
                 textInput = textInput,
                 onTextInputChange = onTextInputChange
             )
         }
     }
-
     Surface(
         modifier = modifier.fillMaxWidth(),
         tonalElevation = 2.dp,

@@ -79,7 +79,13 @@ class MainActivity : ComponentActivity() {
                             isTorchEnabled = viewModel.isTorchEnabled,
                             isTorchSupported = viewModel.isTorchSupported,
                             onClearRecognizedText = viewModel::onClearRecognizedText,
-                            onSelectPhoto = viewModel::onSelectPhoto
+                            cameraContentMode = viewModel.cameraContentMode,
+                            selectedMediaUri = viewModel.selectedMediaUri,
+                            selectedMediaType = viewModel.selectedMediaType,
+                            onSelectMedia = viewModel::onSelectMedia,
+                            onSwitchToCameraPreview = {
+                                viewModel.onSwitchToCameraPreview(this@MainActivity, hasCameraPermission)
+                            }
                         )
                     }
                 }

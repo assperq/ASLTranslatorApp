@@ -31,23 +31,29 @@ class HandLandmarkerHelper(context: Context) {
         handLandmarker = HandLandmarker.createFromOptions(context, options)
     }
 
+
     @OptIn(ExperimentalGetImage::class)
     fun detect(imageProxy: ImageProxy): List<NormalizedLandmark>? {
         val bitmap = imageProxy.toBitmap() ?: return null
 
-        // Преобразуем bitmap в RGBA_8888
-        val rgbaBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, false)
-
-        // Учитываем поворот камеры
-        val matrix = android.graphics.Matrix()
-        matrix.postRotate(imageProxy.imageInfo.rotationDegrees.toFloat())
+        val matrix = android.graphics.Matrix().apply {
+            postRotate(imageProxy.imageInfo.rotationDegrees.toFloat())
+        }
         val rotatedBitmap = Bitmap.createBitmap(
-            rgbaBitmap, 0, 0, rgbaBitmap.width, rgbaBitmap.height, matrix, true
+            bitmap.copy(Bitmap.Config.ARGB_8888, false),
+            0,
+            0,
+            bitmap.width,
+            bitmap.height,
+            matrix,
+            true
         )
+        return detect(rotatedBitmap)
+    }
 
-        // Создаем MediaPipe изображение
-        val mpImage = BitmapImageBuilder(rotatedBitmap).build()
-
+    fun detect(bitmap: Bitmap): List<NormalizedLandmark>? {
+        val rgbaBitmap = if (bitmap.config == Bitmap.Config.ARGB_8888) bitmap else bitmap.copy(Bitmap.Config.ARGB_8888, false)
+        val mpImage = BitmapImageBuilder(rgbaBitmap).build()
         val result = handLandmarker.detect(mpImage)
 
         if (result.landmarks().isEmpty()) return null

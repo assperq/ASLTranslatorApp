@@ -3,6 +3,8 @@ package com.example.handtranslator.translator
 import com.example.handtranslator.AslClassifier
 import com.example.handtranslator.HandLandmarkerHelper
 import android.app.Application
+import android.graphics.Bitmap
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.util.Log
 import androidx.camera.core.Camera
@@ -22,8 +24,10 @@ import androidx.lifecycle.viewModelScope
 import com.example.handtranslator.Helper.getAslDrawable
 import com.example.handtranslator.Helper.landmarksTo210Features
 import com.example.handtranslator.Helper.loadAslLabels
+import com.example.handtranslator.Helper.loadBitmapFromUri
 import com.google.mediapipe.tasks.components.containers.NormalizedLandmark
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.lang.ref.WeakReference
@@ -41,6 +45,7 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
     private val aslLabels by lazy { loadAslLabels(application.applicationContext) }
     private var lastPredictionTime = 0L
     private var activeCamera: Camera? = null
+    private var mediaProcessingJob: Job? = null
 
     var isTorchSupported by mutableStateOf(false)
         private set
@@ -48,6 +53,12 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
         private set
 
     var inputMode by mutableStateOf(InputMode.CAMERA)
+        private set
+    var cameraContentMode by mutableStateOf(CameraContentMode.LIVE_CAMERA)
+        private set
+    var selectedMediaUri by mutableStateOf<Uri?>(null)
+        private set
+    var selectedMediaType by mutableStateOf(SelectedMediaType.NONE)
         private set
     var showLandmarks by mutableStateOf(false)
         private set
@@ -62,10 +73,11 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
 
     fun onInputModeChange(mode: InputMode, lifecycleOwner: LifecycleOwner, hasCameraPermission: Boolean) {
         inputMode = mode
-        if (mode == InputMode.CAMERA && hasCameraPermission) {
+        if (mode == InputMode.CAMERA && cameraContentMode == CameraContentMode.LIVE_CAMERA && hasCameraPermission) {
             bindCameraUseCases(lifecycleOwner)
-        } else if (mode != InputMode.CAMERA) {
+        } else {
             stopCamera()
+            mediaProcessingJob?.cancel()
             landmarks = emptyList()
         }
     }
@@ -86,9 +98,7 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
             name = recognizedLetter,
             imageCard = getAslDrawable(getApplication(), recognizedLetter)
         )
-        val newList = recognizedText.toMutableList()
-        newList.add(newLetter)
-        recognizedText = newList
+        recognizedText = recognizedText + newLetter
     }
 
     fun onTorchEnabledChange(enabled: Boolean) {
@@ -102,33 +112,53 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
 
     fun onCameraFacingChange(facing: CameraFacing, lifecycleOwner: LifecycleOwner) {
         cameraFacing = facing
-        if (inputMode == InputMode.CAMERA) {
+        if (inputMode == InputMode.CAMERA && cameraContentMode == CameraContentMode.LIVE_CAMERA) {
             bindCameraUseCases(lifecycleOwner)
         }
     }
 
     fun onTextInputChange(text: String) {
         textInput = text
-        text.forEach {
-            onRecognizeLetter(it.toString())
-        }
+        recognizedText = emptyList()
+        text.forEach { onRecognizeLetter(it.toString()) }
     }
 
     fun onPreviewViewReady(view: PreviewView, lifecycleOwner: LifecycleOwner, hasCameraPermission: Boolean) {
         previewView = WeakReference(view)
-        if (inputMode == InputMode.CAMERA && hasCameraPermission) {
+        if (inputMode == InputMode.CAMERA && cameraContentMode == CameraContentMode.LIVE_CAMERA && hasCameraPermission) {
             bindCameraUseCases(lifecycleOwner)
         }
     }
 
     fun onCameraPermissionGranted(lifecycleOwner: LifecycleOwner) {
-        if (inputMode == InputMode.CAMERA) {
+        if (inputMode == InputMode.CAMERA && cameraContentMode == CameraContentMode.LIVE_CAMERA) {
             bindCameraUseCases(lifecycleOwner)
         }
     }
 
-    fun onSelectPhoto(uri: Uri) {
+    fun onSelectMedia(uri: Uri) {
+        selectedMediaUri = uri
+        selectedMediaType = resolveMediaType(uri)
+        cameraContentMode = CameraContentMode.SELECTED_MEDIA
+        stopCamera()
+        landmarks = emptyList()
+        recognizedText = emptyList()
+        mediaProcessingJob?.cancel()
 
+        when (selectedMediaType) {
+            SelectedMediaType.PHOTO -> processPhoto(uri)
+            SelectedMediaType.VIDEO -> processVideo(uri)
+            SelectedMediaType.NONE -> Unit
+        }
+    }
+
+    fun onSwitchToCameraPreview(lifecycleOwner: LifecycleOwner, hasCameraPermission: Boolean) {
+        cameraContentMode = CameraContentMode.LIVE_CAMERA
+        landmarks = emptyList()
+        mediaProcessingJob?.cancel()
+        if (inputMode == InputMode.CAMERA && hasCameraPermission) {
+            bindCameraUseCases(lifecycleOwner)
+        }
     }
 
     fun stopCamera() {
@@ -185,33 +215,91 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
         }
 
         if (!detectedLandmarks.isNullOrEmpty()) {
-            processFrameWithPrediction(detectedLandmarks)
+            processLandmarksWithPrediction(detectedLandmarks)
         }
     }
 
-    private fun processFrameWithPrediction(detectedLandmarks: List<NormalizedLandmark>) {
+    private fun processLandmarksWithPrediction(detectedLandmarks: List<NormalizedLandmark>) {
         val currentTime = System.currentTimeMillis()
         if (currentTime - lastPredictionTime < 1500) return
 
         lastPredictionTime = currentTime
 
         viewModelScope.launch(Dispatchers.Default) {
-            val features = landmarksTo210Features(detectedLandmarks)
-            val predictedIndex = aslClassifier.predict(features)
-            val predictedLetter = if (predictedIndex in aslLabels.indices) {
-                aslLabels[predictedIndex]
-            } else {
-                "?"
-            }
-            withContext(Dispatchers.Main) {
-                onRecognizeLetter(predictedLetter)
+            predictAndAppendLetter(detectedLandmarks)
+        }
+    }
+
+    private fun processPhoto(uri: Uri) {
+        mediaProcessingJob = viewModelScope.launch(Dispatchers.Default) {
+            val bitmap = loadBitmapFromUri(getApplication(), uri) ?: return@launch
+            processBitmapForPrediction(bitmap, updateLandmarks = true)
+        }
+    }
+
+    private fun processVideo(uri: Uri) {
+        mediaProcessingJob = viewModelScope.launch(Dispatchers.Default) {
+            val retriever = MediaMetadataRetriever()
+            try {
+                retriever.setDataSource(getApplication(), uri)
+                val durationMs = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+                    ?.toLongOrNull() ?: 0L
+                var frameTimeMs = 0L
+                while (frameTimeMs <= durationMs) {
+                    val frameBitmap = retriever.getFrameAtTime(
+                        frameTimeMs * 1000,
+                        MediaMetadataRetriever.OPTION_CLOSEST_SYNC
+                    )
+                    if (frameBitmap != null) {
+                        processBitmapForPrediction(frameBitmap, updateLandmarks = false)
+                    }
+                    frameTimeMs += 1500L
+                }
+            } catch (e: Exception) {
+                Log.e("Media", "Failed to process video frames", e)
+            } finally {
+                retriever.release()
             }
         }
     }
 
+    private suspend fun processBitmapForPrediction(bitmap: Bitmap, updateLandmarks: Boolean) {
+        val detectedLandmarks = handLandmarkerHelper.detect(bitmap)
+        if (updateLandmarks) {
+            withContext(Dispatchers.Main) {
+                landmarks = detectedLandmarks.orEmpty()
+            }
+        }
+        if (!detectedLandmarks.isNullOrEmpty()) {
+            predictAndAppendLetter(detectedLandmarks)
+        }
+    }
+
+    private suspend fun predictAndAppendLetter(detectedLandmarks: List<NormalizedLandmark>) {
+        val features = landmarksTo210Features(detectedLandmarks)
+        val predictedIndex = aslClassifier.predict(features)
+        val predictedLetter = if (predictedIndex in aslLabels.indices) aslLabels[predictedIndex] else "?"
+        withContext(Dispatchers.Main) {
+            onRecognizeLetter(predictedLetter)
+        }
+    }
+
+    private fun resolveMediaType(uri: Uri): SelectedMediaType {
+        val mimeType = getApplication<Application>().contentResolver.getType(uri).orEmpty()
+        return when {
+            mimeType.startsWith("image/") -> SelectedMediaType.PHOTO
+            mimeType.startsWith("video/") -> SelectedMediaType.VIDEO
+            else -> SelectedMediaType.NONE
+        }
+    }
+
+
+
     override fun onCleared() {
         super.onCleared()
         stopCamera()
+        mediaProcessingJob?.cancel()
         cameraExecutor.shutdown()
+        aslClassifier.close()
     }
 }

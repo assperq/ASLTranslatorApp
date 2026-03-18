@@ -86,4 +86,11 @@ dependencies {
     implementation(libs.koin.androidx.compose.viewmodel)
     implementation(libs.koin.android)
 
+    // For building media playback UIs using Jetpack Compose
+    implementation(libs.androidx.media3.ui.compose)
+
+    // For media playback using ExoPlayer
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.exoplayer.dash)
+
 }

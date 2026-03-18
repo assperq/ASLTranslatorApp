@@ -58,14 +58,14 @@ fun CameraPanel(
     onTorchEnabledChange: (Boolean) -> Unit,
     landmarks: List<NormalizedLandmark>,
     onPreviewViewReady: (PreviewView) -> Unit,
-    onSelectPhoto: (Uri) -> Unit
+    onSelectMedia: (Uri) -> Unit
 ) {
     var controlsVisible by rememberSaveable { mutableStateOf(false) }
     val mediaPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         if (uri != null) {
-            onSelectPhoto(uri)
+            onSelectMedia(uri)
         }
     }
 
@@ -84,11 +84,7 @@ fun CameraPanel(
         if (landmarks.isNotEmpty()) {
             Canvas(modifier = Modifier.fillMaxSize()) {
                 landmarks.forEach { point ->
-                    val landmarkX = if (cameraFacing == CameraFacing.FRONT) {
-                        1f - point.x()
-                    } else {
-                        point.x()
-                    }
+                    val landmarkX = if (cameraFacing == CameraFacing.FRONT) 1f - point.x() else point.x()
                     drawCircle(
                         color = Color.Green,
                         radius = 7f,
@@ -142,7 +138,7 @@ fun CameraPanel(
                             )
                         }
                     ) {
-                        Text("Выбор фото/видео")
+                        Text("Выбрать фото/видео")
                     }
 
                     Row(
