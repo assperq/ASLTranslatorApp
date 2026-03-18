@@ -108,7 +108,7 @@ fun MainScreen(
                             modifier = Modifier.weight(1f),
                             onClearRecognizedText = onClearRecognizedText,
                             onSelectMedia = onSelectMedia,
-                            onSwitchToCameraPreview = onSwitchToCameraPreview
+                            onSwitchToCameraPreview = onSwitchToCameraPreview,
                         )
                     }
                 }
@@ -138,7 +138,7 @@ fun MainScreen(
                             modifier = Modifier.weight(1f),
                             onClearRecognizedText = onClearRecognizedText,
                             onSelectMedia = onSelectMedia,
-                            onSwitchToCameraPreview = onSwitchToCameraPreview
+                            onSwitchToCameraPreview = onSwitchToCameraPreview,
                         )
                     }
                 }
@@ -201,7 +201,7 @@ fun MainContent(
         } else {
             TextInputPanel(
                 textInput = textInput,
-                onTextInputChange = onTextInputChange
+                onTextInputChange = onTextInputChange,
             )
         }
     }

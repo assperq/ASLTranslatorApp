@@ -85,7 +85,7 @@ class MainActivity : ComponentActivity() {
                             onSelectMedia = viewModel::onSelectMedia,
                             onSwitchToCameraPreview = {
                                 viewModel.onSwitchToCameraPreview(this@MainActivity, hasCameraPermission)
-                            }
+                            },
                         )
                     }
                 }
