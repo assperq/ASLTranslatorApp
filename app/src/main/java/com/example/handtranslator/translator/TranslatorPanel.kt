@@ -34,6 +34,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -131,23 +132,27 @@ fun LetterCard(letter: Letter) {
 fun RecognizedTextLazyRowWithGradient(recognizedText: List<Letter>) {
     val listState = rememberLazyListState()
 
+    LaunchedEffect(recognizedText.size) {
+        if (recognizedText.isNotEmpty()) {
+            listState.animateScrollToItem(recognizedText.lastIndex)
+        }
+    }
+
     Box(modifier = Modifier.fillMaxWidth()) {
-        // 🔹 Сам LazyRow
         LazyRow(
             state = listState,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 0.dp) // оставляем место для градиентов
+                .padding(horizontal = 0.dp)
         ) {
             items(recognizedText) { letter ->
                 LetterCard(letter)
             }
         }
 
-        // 🔹 Градиент слева
         val firstVisibleItem = listState.firstVisibleItemIndex
-        if (firstVisibleItem > 0) { // есть скрытые слева
+        if (firstVisibleItem > 0) {
             Box(
                 modifier = Modifier
                     .fillMaxHeight()
@@ -164,10 +169,9 @@ fun RecognizedTextLazyRowWithGradient(recognizedText: List<Letter>) {
             )
         }
 
-        // 🔹 Градиент справа
         val layoutInfo = listState.layoutInfo
         val lastVisibleItem = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-        if (lastVisibleItem < layoutInfo.totalItemsCount - 1) { // есть скрытые справа
+        if (lastVisibleItem < layoutInfo.totalItemsCount - 1) {
             Box(
                 modifier = Modifier
                     .fillMaxHeight()

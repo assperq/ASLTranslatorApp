@@ -94,11 +94,13 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun onRecognizeLetter(recognizedLetter : String) {
-        val newLetter = Letter(
-            name = recognizedLetter,
-            imageCard = getAslDrawable(getApplication(), recognizedLetter)
-        )
-        recognizedText = recognizedText + newLetter
+        try {
+            val newLetter = Letter(
+                name = recognizedLetter,
+                imageCard = getAslDrawable(getApplication(), recognizedLetter)
+            )
+            recognizedText = recognizedText + newLetter
+        } catch (_: Exception) {}
     }
 
     fun onTorchEnabledChange(enabled: Boolean) {

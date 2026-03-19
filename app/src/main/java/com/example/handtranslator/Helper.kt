@@ -61,7 +61,7 @@ object Helper {
     }
 
     fun getAslDrawable(context: Context, letter: String): Int {
-
+        if (letter.uppercase() !in loadAslLabels(context)) throw Exception("Unknown letter")
         val name = "asl_${letter.lowercase()}"
 
         return context.resources.getIdentifier(
