@@ -37,6 +37,18 @@ import java.util.concurrent.Executors
 
 class TranslatorViewModel(application: Application) : AndroidViewModel(application) {
 
+    private companion object {
+        const val PREDICTION_COOLDOWN_MS = 1500L
+        const val SLIDING_WINDOW_SIZE = 5
+        const val REQUIRED_MATCHES = 4
+        const val FRAME_SAMPLE_INTERVAL_MS = 200L
+        const val CONFIDENCE_THRESHOLD = 0.7f
+    }
+
+    private data class PendingPrediction(
+        val letter: String
+    )
+
     private var previewView: WeakReference<PreviewView?> = WeakReference(null)
     private var cameraProvider: ProcessCameraProvider? = null
     private val cameraExecutor: ExecutorService = Executors.newSingleThreadExecutor()
@@ -46,6 +58,8 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
     private var lastPredictionTime = 0L
     private var activeCamera: Camera? = null
     private var mediaProcessingJob: Job? = null
+    private val pendingPredictions = ArrayDeque<PendingPrediction>()
+    private var lastSampledFrameTime = 0L
 
     var isTorchSupported by mutableStateOf(false)
         private set
@@ -79,6 +93,7 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
             stopCamera()
             mediaProcessingJob?.cancel()
             landmarks = emptyList()
+            resetSlidingWindowState()
         }
     }
 
@@ -114,6 +129,7 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
 
     fun onCameraFacingChange(facing: CameraFacing, lifecycleOwner: LifecycleOwner) {
         cameraFacing = facing
+        resetSlidingWindowState()
         if (inputMode == InputMode.CAMERA && cameraContentMode == CameraContentMode.LIVE_CAMERA) {
             bindCameraUseCases(lifecycleOwner)
         }
@@ -146,6 +162,7 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
         landmarks = emptyList()
         recognizedText = emptyList()
         mediaProcessingJob?.cancel()
+        resetSlidingWindowState()
 
         when (selectedMediaType) {
             SelectedMediaType.PHOTO -> processPhoto(uri)
@@ -158,6 +175,7 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
         cameraContentMode = CameraContentMode.LIVE_CAMERA
         landmarks = emptyList()
         mediaProcessingJob?.cancel()
+        resetSlidingWindowState()
         if (inputMode == InputMode.CAMERA && hasCameraPermission) {
             bindCameraUseCases(lifecycleOwner)
         }
@@ -168,6 +186,7 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
         activeCamera = null
         isTorchSupported = false
         isTorchEnabled = false
+        resetSlidingWindowState()
     }
 
     private fun bindCameraUseCases(lifecycleOwner: LifecycleOwner) {
@@ -216,20 +235,52 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
             landmarks = detectedLandmarks.orEmpty()
         }
 
-        if (!detectedLandmarks.isNullOrEmpty()) {
-            processLandmarksWithPrediction(detectedLandmarks)
+        if (detectedLandmarks.isNullOrEmpty()) {
+            resetSlidingWindowState()
+            return
         }
+
+        processLandmarksWithPrediction(detectedLandmarks)
     }
 
     private fun processLandmarksWithPrediction(detectedLandmarks: List<NormalizedLandmark>) {
         val currentTime = System.currentTimeMillis()
-        if (currentTime - lastPredictionTime < 1500) return
+        if (currentTime - lastPredictionTime < PREDICTION_COOLDOWN_MS) return
+        if (pendingPredictions.isNotEmpty() && currentTime - lastSampledFrameTime < FRAME_SAMPLE_INTERVAL_MS) return
 
-        lastPredictionTime = currentTime
+        collectPredictionSample(detectedLandmarks, currentTime)
+    }
 
-        viewModelScope.launch(Dispatchers.Default) {
-            predictAndAppendLetter(detectedLandmarks)
+    private fun collectPredictionSample(
+        detectedLandmarks: List<NormalizedLandmark>,
+        sampleTimeMs: Long
+    ) {
+        val prediction = predictLetter(detectedLandmarks) ?: return
+        pendingPredictions.addLast(prediction)
+        lastSampledFrameTime = sampleTimeMs
+
+        while (pendingPredictions.size > SLIDING_WINDOW_SIZE) {
+            pendingPredictions.removeFirst()
         }
+
+        if (pendingPredictions.size < SLIDING_WINDOW_SIZE) return
+        val majorityPrediction = pendingPredictions
+            .groupingBy { it.letter }
+            .eachCount()
+            .maxByOrNull { it.value }
+
+        if (majorityPrediction != null && majorityPrediction.value >= REQUIRED_MATCHES) {
+            lastPredictionTime = sampleTimeMs
+            pendingPredictions.clear()
+            viewModelScope.launch(Dispatchers.Main) {
+                onRecognizeLetter(majorityPrediction.key)
+            }
+        }
+    }
+
+    private fun resetSlidingWindowState() {
+        pendingPredictions.clear()
+        lastSampledFrameTime = 0L
     }
 
     private fun processPhoto(uri: Uri) {
@@ -273,17 +324,20 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
             }
         }
         if (!detectedLandmarks.isNullOrEmpty()) {
-            predictAndAppendLetter(detectedLandmarks)
+            val predictedLetter = predictLetter(detectedLandmarks)?.letter ?: return
+            withContext(Dispatchers.Main) {
+                onRecognizeLetter(predictedLetter)
+            }
         }
     }
 
-    private suspend fun predictAndAppendLetter(detectedLandmarks: List<NormalizedLandmark>) {
+    private fun predictLetter(detectedLandmarks: List<NormalizedLandmark>): PendingPrediction? {
         val features = landmarksTo210Features(detectedLandmarks)
-        val predictedIndex = aslClassifier.predict(features)
-        val predictedLetter = if (predictedIndex in aslLabels.indices) aslLabels[predictedIndex] else "?"
-        withContext(Dispatchers.Main) {
-            onRecognizeLetter(predictedLetter)
+        val prediction = aslClassifier.predict(features)
+        if (prediction.index !in aslLabels.indices || prediction.confidence < CONFIDENCE_THRESHOLD) {
+            return null
         }
+        return PendingPrediction(letter = aslLabels[prediction.index])
     }
 
     private fun resolveMediaType(uri: Uri): SelectedMediaType {

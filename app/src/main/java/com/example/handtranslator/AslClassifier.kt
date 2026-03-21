@@ -10,7 +10,13 @@ class AslClassifier(context: Context) {
 
     private val model = AslModel.newInstance(context)
 
-    fun predict(features: FloatArray): Int {
+    data class PredictionResult(
+        val index: Int,
+        val confidence: Float
+    )
+
+
+    fun predict(features: FloatArray): PredictionResult {
         val byteBuffer = floatArrayToByteBuffer(features)
 
         // Создаём TensorBuffer для входа
@@ -23,7 +29,9 @@ class AslClassifier(context: Context) {
 
         // Находим индекс с максимальной вероятностью
         val probabilities = outputFeature.floatArray
-        return probabilities.indices.maxByOrNull { probabilities[it] } ?: -1
+        val predictedIndex = probabilities.indices.maxByOrNull { probabilities[it] } ?: -1
+        val confidence = probabilities.getOrNull(predictedIndex) ?: 0f
+        return PredictionResult(predictedIndex, confidence)
     }
 
     fun close() {
