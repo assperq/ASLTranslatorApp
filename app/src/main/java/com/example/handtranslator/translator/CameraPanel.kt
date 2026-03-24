@@ -6,6 +6,8 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
@@ -40,6 +42,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.zIndex
 import com.example.handtranslator.R
 import com.google.mediapipe.tasks.components.containers.NormalizedLandmark
 
@@ -86,11 +89,18 @@ fun CameraPanel(
             }
         }
 
+        val iconBackgroundColor by animateColorAsState(
+            targetValue = if (!controlsVisible) MaterialTheme.colorScheme.surface.copy(alpha = 0.85f) else Color.Transparent,
+            animationSpec = tween(durationMillis = 220),
+            label = "cameraMenuIconBackground"
+        )
+
         IconButton(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(10.dp)
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.85f), RoundedCornerShape(12.dp)),
+                .background(iconBackgroundColor, RoundedCornerShape(12.dp))
+                .zIndex(2f),
             onClick = { controlsVisible = !controlsVisible }
         ) {
             Icon(imageVector = Icons.Default.MoreVert, contentDescription = stringResource(R.string.camera_settings))

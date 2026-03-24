@@ -38,11 +38,11 @@ import java.util.concurrent.Executors
 class TranslatorViewModel(application: Application) : AndroidViewModel(application) {
 
     private companion object {
-        const val PREDICTION_COOLDOWN_MS = 1500L
+        const val PREDICTION_COOLDOWN_MS = 0L
         const val SLIDING_WINDOW_SIZE = 5
         const val REQUIRED_MATCHES = 4
         const val FRAME_SAMPLE_INTERVAL_MS = 200L
-        const val CONFIDENCE_THRESHOLD = 0.7f
+        const val CONFIDENCE_THRESHOLD = 0.55f
     }
 
     private data class PendingPrediction(
