@@ -30,13 +30,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.handtranslator.Helper.loadBitmapFromUri
+import com.example.handtranslator.R
 
 @Composable
 fun MediaPanel(
@@ -47,34 +48,23 @@ fun MediaPanel(
 ) {
     val mediaPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
-    ) { uri ->
-        uri?.let(onSelectMedia)
-    }
+    ) { uri -> uri?.let(onSelectMedia) }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(MaterialTheme.colorScheme.surface)
     ) {
-
         if (selectedMediaUri != null && selectedMediaType != SelectedMediaType.NONE) {
             when (selectedMediaType) {
-                SelectedMediaType.VIDEO -> {
-                    SelectedVideoPreview(selectedMediaUri)
-                }
-
-                SelectedMediaType.PHOTO -> {
-                    SelectedPhotoPreview(selectedMediaUri)
-                }
-
-                else -> {}
+                SelectedMediaType.VIDEO -> SelectedVideoPreview(selectedMediaUri)
+                SelectedMediaType.PHOTO -> SelectedPhotoPreview(selectedMediaUri)
+                else -> Unit
             }
         } else {
             EmptyMediaState {
                 mediaPickerLauncher.launch(
-                    PickVisualMediaRequest(
-                        ActivityResultContracts.PickVisualMedia.ImageAndVideo
-                    )
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
                 )
             }
         }
@@ -87,27 +77,22 @@ fun MediaPanel(
                     .padding(12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-
                 IconButton(
                     onClick = onSwitchToCameraPreview,
-                    modifier = Modifier
-                        .background(Color.Black.copy(alpha = 0.4f), CircleShape)
+                    modifier = Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f), CircleShape)
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White)
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back_to_camera))
                 }
 
                 IconButton(
                     onClick = {
                         mediaPickerLauncher.launch(
-                            PickVisualMediaRequest(
-                                ActivityResultContracts.PickVisualMedia.ImageAndVideo
-                            )
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
                         )
                     },
-                    modifier = Modifier
-                        .background(Color.Black.copy(alpha = 0.4f), CircleShape)
+                    modifier = Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f), CircleShape)
                 ) {
-                    Icon(Icons.Default.PhotoLibrary, null, tint = Color.White)
+                    Icon(Icons.Default.PhotoLibrary, stringResource(R.string.select_another_media))
                 }
             }
         }
@@ -117,18 +102,16 @@ fun MediaPanel(
 @Composable
 private fun EmptyMediaState(onSelectMedia: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(
-            imageVector = Icons.Default.PhotoLibrary,
-            contentDescription = null,
-            modifier = Modifier.size(56.dp)
-        )
-        Text("Выберите фото или видео для распознавания")
+        Icon(imageVector = Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.size(56.dp))
+        Text(stringResource(R.string.media_empty))
         Button(onClick = onSelectMedia, modifier = Modifier.padding(top = 12.dp)) {
-            Text("Открыть галерею")
+            Text(stringResource(R.string.open_gallery))
         }
     }
 }

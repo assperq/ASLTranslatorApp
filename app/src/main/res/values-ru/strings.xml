@@ -1,0 +1,26 @@
+<resources>
+    <string name="app_name">HandTranslator</string>
+    <string name="permission_denied">Доступ к камере отклонен</string>
+
+    <string name="mode_camera">Ввод с камеры</string>
+    <string name="mode_text">Текстовый ввод</string>
+    <string name="source_language">Английский</string>
+    <string name="target_language">ASL</string>
+    <string name="camera_section_title">Захват в реальном времени</string>
+    <string name="text_section_title">Введите текст для перевода</string>
+    <string name="text_input_label">Текст</string>
+    <string name="translation_title">Результат перевода</string>
+    <string name="delete_last_symbol">Удалить последний символ</string>
+    <string name="clear_all">Очистить всё</string>
+    <string name="translation_empty">Переведенные символы появятся здесь</string>
+    <string name="camera_settings">Настройки камеры</string>
+    <string name="pick_media">Выбрать фото/видео</string>
+    <string name="show_landmarks">Показывать точки MediaPipe</string>
+    <string name="flashlight">Фонарик</string>
+    <string name="front_camera">Фронтальная камера</string>
+    <string name="back_camera">Задняя камера</string>
+    <string name="open_gallery">Открыть галерею</string>
+    <string name="media_empty">Выберите фото или видео для распознавания</string>
+    <string name="back_to_camera">Назад к камере</string>
+    <string name="select_another_media">Выбрать другой файл</string>
+</resources>

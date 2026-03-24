@@ -9,121 +9,89 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
-import androidx.compose.material.icons.filled.Backspace
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.handtranslator.R
 
 @Composable
 fun TranslationPanel(
     recognizedText: List<Letter>,
     onClearRecognizedText: (Boolean) -> Unit
 ) {
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
-            .border(
-                1.dp,
-                MaterialTheme.colorScheme.outlineVariant,
-                RoundedCornerShape(12.dp)
-            )
-            .padding(16.dp)
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp))
+            .padding(12.dp)
     ) {
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = "Перевод",
-                style = MaterialTheme.typography.titleLarge,
+                text = stringResource(R.string.translation_title),
+                style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.weight(1f)
             )
 
             if (recognizedText.isNotEmpty()) {
-
-                IconButton(
-                    onClick = { onClearRecognizedText(true) }
-                ) {
+                IconButton(onClick = { onClearRecognizedText(true) }) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Backspace,
-                        contentDescription = "Удалить символ"
+                        contentDescription = stringResource(R.string.delete_last_symbol)
                     )
                 }
-
-                IconButton(
-                    onClick = { onClearRecognizedText(false) }
-                ) {
+                IconButton(onClick = { onClearRecognizedText(false) }) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Очистить всё"
+                        contentDescription = stringResource(R.string.clear_all)
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        RecognizedTextLazyRowWithGradient(recognizedText)
+        Spacer(modifier = Modifier.height(8.dp))
+        if (recognizedText.isEmpty()) {
+            Text(
+                text = stringResource(R.string.translation_empty),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.secondary
+            )
+        } else {
+            RecognizedTextLazyRowWithGradient(recognizedText)
+        }
     }
 }
 
 @Composable
 fun LetterCard(letter: Letter) {
-    Card(
-        modifier = Modifier.padding(5.dp),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-
-            Image(
-                painter = painterResource(letter.imageCard),
-                contentDescription = letter.name,
-                modifier = Modifier.size(120.dp)
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            Text(
-                letter.name,
-                style = MaterialTheme.typography.headlineMedium
-            )
+    Card(modifier = Modifier.padding(4.dp), shape = RoundedCornerShape(14.dp)) {
+        Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Image(painter = painterResource(letter.imageCard), contentDescription = letter.name, modifier = Modifier.size(96.dp))
+            Spacer(Modifier.height(6.dp))
+            Text(letter.name, style = MaterialTheme.typography.titleLarge)
         }
     }
 }
@@ -142,13 +110,9 @@ fun RecognizedTextLazyRowWithGradient(recognizedText: List<Letter>) {
         LazyRow(
             state = listState,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 0.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
-            items(recognizedText) { letter ->
-                LetterCard(letter)
-            }
+            items(recognizedText) { letter -> LetterCard(letter) }
         }
 
         val firstVisibleItem = listState.firstVisibleItemIndex
@@ -159,10 +123,7 @@ fun RecognizedTextLazyRowWithGradient(recognizedText: List<Letter>) {
                     .width(24.dp)
                     .background(
                         brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
-                                Color.Transparent
-                            )
+                            colors = listOf(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f), Color.Transparent)
                         )
                     )
                     .align(Alignment.CenterStart)
@@ -178,10 +139,7 @@ fun RecognizedTextLazyRowWithGradient(recognizedText: List<Letter>) {
                     .width(24.dp)
                     .background(
                         brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
-                            )
+                            colors = listOf(Color.Transparent, MaterialTheme.colorScheme.surface.copy(alpha = 0.9f))
                         )
                     )
                     .align(Alignment.CenterEnd)
