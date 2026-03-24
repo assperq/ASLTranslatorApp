@@ -38,11 +38,13 @@ import java.util.concurrent.Executors
 class TranslatorViewModel(application: Application) : AndroidViewModel(application) {
 
     private companion object {
-        const val PREDICTION_COOLDOWN_MS = 0L
-        const val SLIDING_WINDOW_SIZE = 5
-        const val REQUIRED_MATCHES = 4
-        const val FRAME_SAMPLE_INTERVAL_MS = 200L
-        const val CONFIDENCE_THRESHOLD = 0.55f
+        const val PREDICTION_COOLDOWN_MS = 400L
+        const val SLIDING_WINDOW_SIZE = 3
+        const val REQUIRED_MATCHES = 2
+        const val FRAME_SAMPLE_INTERVAL_MS = 90L
+        const val LIVE_CONFIDENCE_THRESHOLD = 0.45f
+        const val MEDIA_CONFIDENCE_THRESHOLD = 0.35f
+        const val MEDIA_FALLBACK_CONFIDENCE_THRESHOLD = 0.2f
     }
 
     private data class PendingPrediction(
@@ -255,7 +257,7 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
         detectedLandmarks: List<NormalizedLandmark>,
         sampleTimeMs: Long
     ) {
-        val prediction = predictLetter(detectedLandmarks) ?: return
+        val prediction = predictLetter(detectedLandmarks, LIVE_CONFIDENCE_THRESHOLD) ?: return
         pendingPredictions.addLast(prediction)
         lastSampledFrameTime = sampleTimeMs
 
@@ -324,17 +326,22 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
             }
         }
         if (!detectedLandmarks.isNullOrEmpty()) {
-            val predictedLetter = predictLetter(detectedLandmarks)?.letter ?: return
+            val predictedLetter = predictLetter(detectedLandmarks, MEDIA_CONFIDENCE_THRESHOLD)?.letter
+                ?: predictLetter(detectedLandmarks, MEDIA_FALLBACK_CONFIDENCE_THRESHOLD)?.letter
+                ?: return
             withContext(Dispatchers.Main) {
                 onRecognizeLetter(predictedLetter)
             }
         }
     }
 
-    private fun predictLetter(detectedLandmarks: List<NormalizedLandmark>): PendingPrediction? {
+    private fun predictLetter(
+        detectedLandmarks: List<NormalizedLandmark>,
+        confidenceThreshold: Float
+    ): PendingPrediction? {
         val features = landmarksTo210Features(detectedLandmarks)
         val prediction = aslClassifier.predict(features)
-        if (prediction.index !in aslLabels.indices || prediction.confidence < CONFIDENCE_THRESHOLD) {
+        if (prediction.index !in aslLabels.indices || prediction.confidence < confidenceThreshold){
             return null
         }
         return PendingPrediction(letter = aslLabels[prediction.index])

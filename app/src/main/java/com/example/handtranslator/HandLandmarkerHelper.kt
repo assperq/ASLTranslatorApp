@@ -17,6 +17,12 @@ class HandLandmarkerHelper(context: Context) {
 
     private val handLandmarker: HandLandmarker
 
+    private companion object {
+        const val DETECTION_CONFIDENCE = 0.35f
+        const val PRESENCE_CONFIDENCE = 0.35f
+        const val TRACKING_CONFIDENCE = 0.35f
+    }
+
     init {
         val baseOptions = BaseOptions.builder()
             .setModelAssetPath("hand_landmarker.task")
@@ -26,6 +32,9 @@ class HandLandmarkerHelper(context: Context) {
         val options = HandLandmarker.HandLandmarkerOptions.builder()
             .setBaseOptions(baseOptions)
             .setNumHands(1)
+            .setMinHandDetectionConfidence(DETECTION_CONFIDENCE)
+            .setMinHandPresenceConfidence(PRESENCE_CONFIDENCE)
+            .setMinTrackingConfidence(TRACKING_CONFIDENCE)
             .build()
 
         handLandmarker = HandLandmarker.createFromOptions(context, options)
