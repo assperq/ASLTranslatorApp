@@ -45,6 +45,8 @@ fun MainScreen(
     onSelectMedia: (Uri) -> Unit,
     onSwitchToCameraPreview: () -> Unit
 ) {
+    val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -58,56 +60,29 @@ fun MainScreen(
             HeaderBar()
             InputModeSelector(inputMode = inputMode, onInputModeChange = onInputModeChange)
 
-            val contentModifier = Modifier.weight(1f)
-            if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = contentModifier.fillMaxWidth()) {
-                    MainContent(
-                        inputMode,
-                        cameraContentMode,
-                        selectedMediaUri,
-                        selectedMediaType,
-                        showLandmarks,
-                        onShowLandmarksChange,
-                        cameraFacing,
-                        onCameraFacingChange,
-                        isTorchSupported,
-                        isTorchEnabled,
-                        onTorchEnabledChange,
-                        recognizedText,
-                        textInput,
-                        onTextInputChange,
-                        landmarks,
-                        onPreviewViewReady,
-                        onClearRecognizedText,
-                        onSelectMedia,
-                        onSwitchToCameraPreview,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            } else {
-                MainContent(
-                    inputMode,
-                    cameraContentMode,
-                    selectedMediaUri,
-                    selectedMediaType,
-                    showLandmarks,
-                    onShowLandmarksChange,
-                    cameraFacing,
-                    onCameraFacingChange,
-                    isTorchSupported,
-                    isTorchEnabled,
-                    onTorchEnabledChange,
-                    recognizedText,
-                    textInput,
-                    onTextInputChange,
-                    landmarks,
-                    onPreviewViewReady,
-                    onClearRecognizedText,
-                    onSelectMedia,
-                    onSwitchToCameraPreview,
-                    modifier = contentModifier
-                )
-            }
+            MainContent(
+                inputMode = inputMode,
+                cameraContentMode = cameraContentMode,
+                selectedMediaUri = selectedMediaUri,
+                selectedMediaType = selectedMediaType,
+                showLandmarks = showLandmarks,
+                onShowLandmarksChange = onShowLandmarksChange,
+                cameraFacing = cameraFacing,
+                onCameraFacingChange = onCameraFacingChange,
+                isTorchSupported = isTorchSupported,
+                isTorchEnabled = isTorchEnabled,
+                onTorchEnabledChange = onTorchEnabledChange,
+                recognizedText = recognizedText,
+                textInput = textInput,
+                onTextInputChange = onTextInputChange,
+                landmarks = landmarks,
+                onPreviewViewReady = onPreviewViewReady,
+                onClearRecognizedText = onClearRecognizedText,
+                onSelectMedia = onSelectMedia,
+                onSwitchToCameraPreview = onSwitchToCameraPreview,
+                isLandscape = isLandscape,
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }
@@ -156,49 +131,99 @@ fun MainContent(
     onClearRecognizedText: (Boolean) -> Unit,
     onSelectMedia: (Uri) -> Unit,
     onSwitchToCameraPreview: () -> Unit,
+    isLandscape: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Surface(
-            modifier = Modifier.weight(1f),
-            tonalElevation = 4.dp,
-            shape = RoundedCornerShape(20.dp),
-            color = MaterialTheme.colorScheme.surface
+    if (isLandscape) {
+        Row(
+            modifier = modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            if (inputMode == InputMode.CAMERA) {
-                if (cameraContentMode == CameraContentMode.LIVE_CAMERA) {
-                    CameraPanel(
-                        showLandmarks = showLandmarks,
-                        onShowLandmarksChange = onShowLandmarksChange,
-                        cameraFacing = cameraFacing,
-                        onCameraFacingChange = onCameraFacingChange,
-                        landmarks = if (showLandmarks) landmarks else emptyList(),
-                        onPreviewViewReady = onPreviewViewReady,
-                        isTorchSupported = isTorchSupported,
-                        isTorchEnabled = isTorchEnabled,
-                        onTorchEnabledChange = onTorchEnabledChange,
-                        onSelectMedia = onSelectMedia
-                    )
+            Surface(
+                modifier = Modifier.weight(1.4f),
+                tonalElevation = 4.dp,
+                shape = RoundedCornerShape(20.dp),
+                color = MaterialTheme.colorScheme.surface
+            ) {
+                if (inputMode == InputMode.CAMERA) {
+                    if (cameraContentMode == CameraContentMode.LIVE_CAMERA) {
+                        CameraPanel(
+                            showLandmarks = showLandmarks,
+                            onShowLandmarksChange = onShowLandmarksChange,
+                            cameraFacing = cameraFacing,
+                            onCameraFacingChange = onCameraFacingChange,
+                            landmarks = if (showLandmarks) landmarks else emptyList(),
+                            onPreviewViewReady = onPreviewViewReady,
+                            isTorchSupported = isTorchSupported,
+                            isTorchEnabled = isTorchEnabled,
+                            onTorchEnabledChange = onTorchEnabledChange,
+                            onSelectMedia = onSelectMedia
+                        )
+                    } else {
+                        MediaPanel(
+                            selectedMediaUri = selectedMediaUri,
+                            selectedMediaType = selectedMediaType,
+                            onSelectMedia = onSelectMedia,
+                            onSwitchToCameraPreview = onSwitchToCameraPreview
+                        )
+                    }
                 } else {
-                    MediaPanel(
-                        selectedMediaUri = selectedMediaUri,
-                        selectedMediaType = selectedMediaType,
-                        onSelectMedia = onSelectMedia,
-                        onSwitchToCameraPreview = onSwitchToCameraPreview
-                    )
+                    TextInputPanel(textInput = textInput, onTextInputChange = onTextInputChange)
                 }
-            } else {
-                TextInputPanel(textInput = textInput, onTextInputChange = onTextInputChange)
+            }
+
+            Surface(
+                modifier = Modifier.weight(1f),
+                tonalElevation = 4.dp,
+                shape = RoundedCornerShape(20.dp),
+                color = MaterialTheme.colorScheme.surface
+            ) {
+                TranslationPanel(recognizedText, onClearRecognizedText, compactCards = true)
             }
         }
+    } else {
+        Column(modifier = modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Surface(
+                modifier = Modifier.weight(1f),
+                tonalElevation = 4.dp,
+                shape = RoundedCornerShape(20.dp),
+                color = MaterialTheme.colorScheme.surface
+            ) {
+                if (inputMode == InputMode.CAMERA) {
+                    if (cameraContentMode == CameraContentMode.LIVE_CAMERA) {
+                        CameraPanel(
+                            showLandmarks = showLandmarks,
+                            onShowLandmarksChange = onShowLandmarksChange,
+                            cameraFacing = cameraFacing,
+                            onCameraFacingChange = onCameraFacingChange,
+                            landmarks = if (showLandmarks) landmarks else emptyList(),
+                            onPreviewViewReady = onPreviewViewReady,
+                            isTorchSupported = isTorchSupported,
+                            isTorchEnabled = isTorchEnabled,
+                            onTorchEnabledChange = onTorchEnabledChange,
+                            onSelectMedia = onSelectMedia
+                        )
+                    } else {
+                        MediaPanel(
+                            selectedMediaUri = selectedMediaUri,
+                            selectedMediaType = selectedMediaType,
+                            onSelectMedia = onSelectMedia,
+                            onSwitchToCameraPreview = onSwitchToCameraPreview
+                        )
+                    }
+                } else {
+                    TextInputPanel(textInput = textInput, onTextInputChange = onTextInputChange)
+                }
+            }
 
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            tonalElevation = 4.dp,
-            shape = RoundedCornerShape(20.dp),
-            color = MaterialTheme.colorScheme.surface
-        ) {
-            TranslationPanel(recognizedText, onClearRecognizedText)
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                tonalElevation = 4.dp,
+                shape = RoundedCornerShape(20.dp),
+                color = MaterialTheme.colorScheme.surface
+            ) {
+                TranslationPanel(recognizedText, onClearRecognizedText)
+            }
         }
     }
 }
