@@ -1,3 +1,26 @@
 <resources>
     <string name="app_name">HandTranslator</string>
+    <string name="permission_denied">Camera permission denied</string>
+
+    <string name="mode_camera">Camera input</string>
+    <string name="mode_text">Text input</string>
+    <string name="source_language">English</string>
+    <string name="target_language">ASL</string>
+    <string name="camera_section_title">Live capture</string>
+    <string name="text_section_title">Type text to translate</string>
+    <string name="text_input_label">Input text</string>
+    <string name="translation_title">Translation output</string>
+    <string name="delete_last_symbol">Delete last symbol</string>
+    <string name="clear_all">Clear all</string>
+    <string name="translation_empty">Your translated symbols will appear here</string>
+    <string name="camera_settings">Camera settings</string>
+    <string name="pick_media">Choose photo/video</string>
+    <string name="show_landmarks">Show MediaPipe landmarks</string>
+    <string name="flashlight">Flashlight</string>
+    <string name="front_camera">Front camera</string>
+    <string name="back_camera">Back camera</string>
+    <string name="open_gallery">Open gallery</string>
+    <string name="media_empty">Select a photo or video for recognition</string>
+    <string name="back_to_camera">Back to camera</string>
+    <string name="select_another_media">Select another file</string>
 </resources>

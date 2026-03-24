@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
                 .all { it.value }
 
             if (!hasCameraPermission) {
-                Toast.makeText(baseContext, "Permission request denied", Toast.LENGTH_SHORT).show()
+                Toast.makeText(baseContext, getString(R.string.permission_denied), Toast.LENGTH_SHORT).show()
             } else {
                 viewModel.onCameraPermissionGranted(this)
             }
