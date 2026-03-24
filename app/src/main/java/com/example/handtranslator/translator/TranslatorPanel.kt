@@ -3,22 +3,28 @@ package com.example.handtranslator.translator
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.filled.Close
@@ -42,11 +48,12 @@ import com.example.handtranslator.R
 fun TranslationPanel(
     recognizedText: List<Letter>,
     onClearRecognizedText: (Boolean) -> Unit,
-    compactCards: Boolean = false
+    modifier: Modifier = Modifier,
+    compactCards: Boolean = false,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
+            .fillMaxSize()
             .heightIn(min = 140.dp, max = 260.dp)
             .padding(16.dp)
             .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp))
@@ -83,7 +90,13 @@ fun TranslationPanel(
                 color = MaterialTheme.colorScheme.secondary
             )
         } else {
-            RecognizedTextLazyRowWithGradient(recognizedText, compactCards = compactCards)
+            RecognizedTextScrollableRow(
+                recognizedText = recognizedText,
+                compactCards = compactCards,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 120.dp, max = 220.dp)
+            )
         }
     }
 }
@@ -94,7 +107,7 @@ fun LetterCard(letter: Letter, compact: Boolean) {
     val horizontalPadding = if (compact) 10.dp else 12.dp
     val verticalPadding = if (compact) 8.dp else 12.dp
 
-    Card(modifier = Modifier.padding(4.dp), shape = RoundedCornerShape(14.dp)) {
+    Card(shape = RoundedCornerShape(14.dp)) {
         Column(
             modifier = Modifier.padding(horizontal = horizontalPadding, vertical = verticalPadding),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -111,56 +124,37 @@ fun LetterCard(letter: Letter, compact: Boolean) {
 }
 
 @Composable
-fun RecognizedTextLazyRowWithGradient(
+fun RecognizedTextScrollableRow(
     recognizedText: List<Letter>,
-    compactCards: Boolean
+    compactCards: Boolean,
+    modifier: Modifier = Modifier
 ) {
-    val listState = rememberLazyListState()
+    val verticalScrollState = rememberScrollState()
+    val horizontalScrollState = rememberScrollState()
 
     LaunchedEffect(recognizedText.size) {
         if (recognizedText.isNotEmpty()) {
-            listState.animateScrollToItem(recognizedText.lastIndex)
+            horizontalScrollState.animateScrollTo(horizontalScrollState.maxValue)
         }
     }
 
-    Box(modifier = Modifier.fillMaxWidth()) {
-        LazyRow(
-            state = listState,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth()
+    Column(
+        modifier = modifier.verticalScroll(verticalScrollState)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(horizontalScrollState),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(recognizedText) { letter -> LetterCard(letter, compact = compactCards) }
-        }
-
-        val firstVisibleItem = listState.firstVisibleItemIndex
-        if (firstVisibleItem > 0) {
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(24.dp)
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f), Color.Transparent)
-                        )
-                    )
-                    .align(Alignment.CenterStart)
-            )
-        }
-
-        val layoutInfo = listState.layoutInfo
-        val lastVisibleItem = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-        if (lastVisibleItem < layoutInfo.totalItemsCount - 1) {
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(24.dp)
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(Color.Transparent, MaterialTheme.colorScheme.surface.copy(alpha = 0.9f))
-                        )
-                    )
-                    .align(Alignment.CenterEnd)
-            )
+            recognizedText.forEach { letter ->
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    LetterCard(letter = letter, compact = compactCards)
+                }
+            }
         }
     }
 }

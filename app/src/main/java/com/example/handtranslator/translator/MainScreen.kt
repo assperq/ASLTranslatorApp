@@ -6,8 +6,10 @@ import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -173,12 +175,19 @@ fun MainContent(
             }
 
             Surface(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = 220.dp, max = 320.dp),
                 tonalElevation = 4.dp,
                 shape = RoundedCornerShape(20.dp),
                 color = MaterialTheme.colorScheme.surface
             ) {
-                TranslationPanel(recognizedText, onClearRecognizedText, compactCards = true)
+                TranslationPanel(
+                    recognizedText = recognizedText,
+                    onClearRecognizedText = onClearRecognizedText,
+                    compactCards = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     } else {
@@ -217,12 +226,18 @@ fun MainContent(
             }
 
             Surface(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 220.dp, max = 320.dp),
                 tonalElevation = 4.dp,
                 shape = RoundedCornerShape(20.dp),
                 color = MaterialTheme.colorScheme.surface
             ) {
-                TranslationPanel(recognizedText, onClearRecognizedText)
+                TranslationPanel(
+                    recognizedText = recognizedText,
+                    onClearRecognizedText = onClearRecognizedText,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }

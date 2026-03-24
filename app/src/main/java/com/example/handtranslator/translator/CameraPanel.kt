@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cameraswitch
@@ -59,7 +60,7 @@ fun CameraPanel(
     onPreviewViewReady: (PreviewView) -> Unit,
     onSelectMedia: (Uri) -> Unit
 ) {
-    var controlsVisible by rememberSaveable { mutableStateOf(true) }
+    var controlsVisible by rememberSaveable { mutableStateOf(false) }
     val mediaPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri -> if (uri != null) onSelectMedia(uri) }
@@ -114,52 +115,54 @@ fun CameraPanel(
                 .align(Alignment.TopStart)
                 .padding(12.dp)
         ) {
-            Column(
+            LazyColumn(
                 modifier = Modifier
                     .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.92f), RoundedCornerShape(16.dp))
                     .padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(stringResource(R.string.camera_section_title), style = MaterialTheme.typography.titleMedium)
-                Button(onClick = {
-                    mediaPickerLauncher.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
-                    )
-                }) {
-                    Text(stringResource(R.string.pick_media))
-                }
-
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.show_landmarks), modifier = Modifier.weight(1f))
-                    Switch(checked = showLandmarks, onCheckedChange = onShowLandmarksChange)
-                }
-
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.flashlight), modifier = Modifier.weight(1f))
-                    Switch(
-                        checked = isTorchEnabled,
-                        onCheckedChange = onTorchEnabledChange,
-                        enabled = cameraFacing == CameraFacing.BACK && isTorchSupported
-                    )
-                }
-
-                FilterChip(
-                    selected = cameraFacing == CameraFacing.FRONT,
-                    onClick = {
-                        onCameraFacingChange(
-                            if (cameraFacing == CameraFacing.FRONT) CameraFacing.BACK else CameraFacing.FRONT
+                item {
+                    Text(stringResource(R.string.camera_section_title), style = MaterialTheme.typography.titleMedium)
+                    Button(onClick = {
+                        mediaPickerLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
                         )
-                    },
-                    label = {
-                        Text(
-                            if (cameraFacing == CameraFacing.FRONT) stringResource(R.string.front_camera)
-                            else stringResource(R.string.back_camera)
-                        )
-                    },
-                    leadingIcon = {
-                        Icon(imageVector = Icons.Default.Cameraswitch, contentDescription = null, modifier = Modifier.size(20.dp))
+                    }) {
+                        Text(stringResource(R.string.pick_media))
                     }
-                )
+
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(stringResource(R.string.show_landmarks), modifier = Modifier.weight(1f))
+                        Switch(checked = showLandmarks, onCheckedChange = onShowLandmarksChange)
+                    }
+
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(stringResource(R.string.flashlight), modifier = Modifier.weight(1f))
+                        Switch(
+                            checked = isTorchEnabled,
+                            onCheckedChange = onTorchEnabledChange,
+                            enabled = cameraFacing == CameraFacing.BACK && isTorchSupported
+                        )
+                    }
+
+                    FilterChip(
+                        selected = cameraFacing == CameraFacing.FRONT,
+                        onClick = {
+                            onCameraFacingChange(
+                                if (cameraFacing == CameraFacing.FRONT) CameraFacing.BACK else CameraFacing.FRONT
+                            )
+                        },
+                        label = {
+                            Text(
+                                if (cameraFacing == CameraFacing.FRONT) stringResource(R.string.front_camera)
+                                else stringResource(R.string.back_camera)
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Default.Cameraswitch, contentDescription = null, modifier = Modifier.size(20.dp))
+                        }
+                    )
+                }
             }
         }
     }
