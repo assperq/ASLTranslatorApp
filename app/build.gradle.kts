@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.3.20"
 }
 
 android {
@@ -34,7 +36,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = "11"
+        //jvmTarget = 11
     }
     buildFeatures {
         compose = true
@@ -89,8 +91,8 @@ dependencies {
     // For building media playback UIs using Jetpack Compose
     implementation(libs.androidx.media3.ui.compose)
 
-    // For media playback using ExoPlayer
-    implementation(libs.androidx.media3.exoplayer)
-    implementation(libs.androidx.media3.exoplayer.dash)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.datastore)
 
+    implementation(libs.kotlinx.serialization.json)
 }

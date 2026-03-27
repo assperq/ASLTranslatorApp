@@ -3,6 +3,7 @@ package com.example.handtranslator.translator
 import com.example.handtranslator.AslClassifier
 import com.example.handtranslator.HandLandmarkerHelper
 import android.app.Application
+import android.gesture.Prediction
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
 import android.net.Uri
@@ -25,9 +26,13 @@ import com.example.handtranslator.Helper.getAslDrawable
 import com.example.handtranslator.Helper.landmarksTo210Features
 import com.example.handtranslator.Helper.loadAslLabels
 import com.example.handtranslator.Helper.loadBitmapFromUri
+import com.example.handtranslator.data.preferences.DataStoreManager
 import com.google.mediapipe.tasks.components.containers.NormalizedLandmark
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.lang.ref.WeakReference
@@ -37,12 +42,54 @@ import java.util.concurrent.Executors
 
 class TranslatorViewModel(application: Application) : AndroidViewModel(application) {
 
+    private val dataStoreManager = DataStoreManager(application)
+
+    val predictionCooldown = dataStoreManager.getPredictionCooldown()
+        .stateIn(viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            400L
+        )
+    fun setPredictionCooldown(predictionCooldown: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            dataStoreManager.setPredictionCooldown(predictionCooldown)
+        }
+    }
+
+    val requiredMatches = dataStoreManager.getRequiredMatches()
+        .stateIn(viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            2
+        )
+    fun setRequiredMatches(requiredMatches: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            dataStoreManager.setRequiredMatches(requiredMatches)
+        }
+    }
+
+    val frameSampleIntervalMs = dataStoreManager.getFrameSampleInterval()
+        .stateIn(viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            90L
+        )
+    fun setFrameSampleIntervalMs(frameSampleIntervalMs: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            dataStoreManager.setFrameSampleInterval(frameSampleIntervalMs)
+        }
+    }
+
+    val liveConfidenceThreshold = dataStoreManager.getLiveConfidenceThreshold()
+        .stateIn(viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            0.45f
+        )
+    fun setLiveConfidenceThreshold(liveConfidenceThreshold: Float) {
+        viewModelScope.launch(Dispatchers.IO) {
+            dataStoreManager.setLiveConfidenceThreshold(liveConfidenceThreshold)
+        }
+    }
+
     private companion object {
-        const val PREDICTION_COOLDOWN_MS = 400L
         const val SLIDING_WINDOW_SIZE = 3
-        const val REQUIRED_MATCHES = 2
-        const val FRAME_SAMPLE_INTERVAL_MS = 90L
-        const val LIVE_CONFIDENCE_THRESHOLD = 0.45f
         const val MEDIA_CONFIDENCE_THRESHOLD = 0.35f
         const val MEDIA_FALLBACK_CONFIDENCE_THRESHOLD = 0.2f
     }
@@ -247,8 +294,8 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
 
     private fun processLandmarksWithPrediction(detectedLandmarks: List<NormalizedLandmark>) {
         val currentTime = System.currentTimeMillis()
-        if (currentTime - lastPredictionTime < PREDICTION_COOLDOWN_MS) return
-        if (pendingPredictions.isNotEmpty() && currentTime - lastSampledFrameTime < FRAME_SAMPLE_INTERVAL_MS) return
+        if (currentTime - lastPredictionTime < predictionCooldown.value) return
+        if (pendingPredictions.isNotEmpty() && currentTime - lastSampledFrameTime < frameSampleIntervalMs.value) return
 
         collectPredictionSample(detectedLandmarks, currentTime)
     }
@@ -257,7 +304,7 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
         detectedLandmarks: List<NormalizedLandmark>,
         sampleTimeMs: Long
     ) {
-        val prediction = predictLetter(detectedLandmarks, LIVE_CONFIDENCE_THRESHOLD) ?: return
+        val prediction = predictLetter(detectedLandmarks, liveConfidenceThreshold.value) ?: return
         pendingPredictions.addLast(prediction)
         lastSampledFrameTime = sampleTimeMs
 
@@ -271,7 +318,7 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
             .eachCount()
             .maxByOrNull { it.value }
 
-        if (majorityPrediction != null && majorityPrediction.value >= REQUIRED_MATCHES) {
+        if (majorityPrediction != null && majorityPrediction.value >= requiredMatches.value) {
             lastPredictionTime = sampleTimeMs
             pendingPredictions.clear()
             viewModelScope.launch(Dispatchers.Main) {
