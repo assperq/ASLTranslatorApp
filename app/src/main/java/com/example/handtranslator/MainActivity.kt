@@ -17,6 +17,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import androidx.navigation.compose.rememberNavController
+import com.example.handtranslator.navigation.SetupNavigation
 import com.example.handtranslator.translator.InputMode
 import com.example.handtranslator.translator.MainScreen
 import com.example.handtranslator.translator.TranslatorViewModel
@@ -49,46 +51,13 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             HandTranslatorTheme {
-                Scaffold { innerPadding ->
-                    Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-                        MainScreen(
-                            inputMode = viewModel.inputMode,
-                            onInputModeChange = {
-                                viewModel.onInputModeChange(it, this@MainActivity, hasCameraPermission)
-                                if (it == InputMode.CAMERA && !hasCameraPermission) {
-                                    ensureCameraPermission()
-                                }
-                            },
-                            showLandmarks = viewModel.showLandmarks,
-                            onShowLandmarksChange = viewModel::onShowLandmarksChange,
-                            cameraFacing = viewModel.cameraFacing,
-                            onCameraFacingChange = {
-                                viewModel.onCameraFacingChange(it, this@MainActivity)
-                            },
-                            recognizedText = viewModel.recognizedText,
-                            textInput = viewModel.textInput,
-                            onTextInputChange = viewModel::onTextInputChange,
-                            landmarks = viewModel.landmarks,
-                            onPreviewViewReady = { view ->
-                                viewModel.onPreviewViewReady(view, this@MainActivity, hasCameraPermission)
-                                if (!hasCameraPermission) {
-                                    ensureCameraPermission()
-                                }
-                            },
-                            onTorchEnabledChange = viewModel::onTorchEnabledChange,
-                            isTorchEnabled = viewModel.isTorchEnabled,
-                            isTorchSupported = viewModel.isTorchSupported,
-                            onClearRecognizedText = viewModel::onClearRecognizedText,
-                            cameraContentMode = viewModel.cameraContentMode,
-                            selectedMediaUri = viewModel.selectedMediaUri,
-                            selectedMediaType = viewModel.selectedMediaType,
-                            onSelectMedia = viewModel::onSelectMedia,
-                            onSwitchToCameraPreview = {
-                                viewModel.onSwitchToCameraPreview(this@MainActivity, hasCameraPermission)
-                            },
-                        )
-                    }
-                }
+                val navHostController = rememberNavController()
+                SetupNavigation(
+                    navHostController,
+                    hasCameraPermission,
+                    ::ensureCameraPermission,
+                    viewModel
+                )
             }
         }
     }
