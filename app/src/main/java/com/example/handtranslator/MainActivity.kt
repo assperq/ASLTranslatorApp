@@ -8,25 +8,17 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.navigation.compose.rememberNavController
 import com.example.handtranslator.navigation.SetupNavigation
-import com.example.handtranslator.translator.InputMode
-import com.example.handtranslator.translator.MainScreen
 import com.example.handtranslator.translator.TranslatorViewModel
 import com.example.handtranslator.ui.theme.HandTranslatorTheme
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity : ComponentActivity() {
-
     private val viewModel: TranslatorViewModel by viewModel()
     private val requiredPermissions = arrayOf(Manifest.permission.CAMERA)
     private var hasCameraPermission by mutableStateOf(false)
