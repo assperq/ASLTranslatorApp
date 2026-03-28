@@ -23,4 +23,14 @@
     <string name="media_empty">Выберите фото или видео для распознавания</string>
     <string name="back_to_camera">Назад к камере</string>
     <string name="select_another_media">Выбрать другой файл</string>
+    <string name="open_settings">Открыть настройки</string>
+    <string name="settings_title">Настройки</string>
+    <string name="settings_subtitle">Параметры распознавания</string>
+    <string name="back_to_main">Назад на главный экран</string>
+    <string name="settings_prediction_cooldown">Задержка предсказания</string>
+    <string name="settings_required_matches">Требуемые совпадения</string>
+    <string name="settings_frame_interval">Интервал анализа кадров</string>
+    <string name="settings_confidence_threshold">Порог уверенности</string>
+    <string name="settings_ms_value">%1$d мс</string>
+    <string name="settings_percent_value">%1$d%%</string>
 </resources>

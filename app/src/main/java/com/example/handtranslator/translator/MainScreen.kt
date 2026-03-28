@@ -12,6 +12,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -45,7 +49,8 @@ fun MainScreen(
     onPreviewViewReady: (PreviewView) -> Unit,
     onClearRecognizedText: (Boolean) -> Unit,
     onSelectMedia: (Uri) -> Unit,
-    onSwitchToCameraPreview: () -> Unit
+    onSwitchToCameraPreview: () -> Unit,
+    onOpenSettings: () -> Unit
 ) {
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
@@ -59,7 +64,7 @@ fun MainScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            HeaderBar()
+            HeaderBar(onOpenSettings = onOpenSettings)
             InputModeSelector(inputMode = inputMode, onInputModeChange = onInputModeChange)
 
             MainContent(
@@ -90,7 +95,9 @@ fun MainScreen(
 }
 
 @Composable
-private fun HeaderBar() {
+private fun HeaderBar(
+    onOpenSettings: () -> Unit
+) {
     Surface(
         shape = RoundedCornerShape(20.dp),
         tonalElevation = 6.dp,
@@ -102,12 +109,21 @@ private fun HeaderBar() {
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("HandTranslator", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Text(
-                text = stringResource(R.string.source_language) + " → " + stringResource(R.string.target_language),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.secondary
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text("HandTranslator", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(
+                    text = stringResource(R.string.source_language) + " → " + stringResource(R.string.target_language),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            }
+
+            IconButton(onClick = onOpenSettings) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = stringResource(R.string.open_settings)
+                )
+            }
         }
     }
 }

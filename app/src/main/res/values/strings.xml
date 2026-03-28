@@ -23,4 +23,14 @@
     <string name="media_empty">Select a photo or video for recognition</string>
     <string name="back_to_camera">Back to camera</string>
     <string name="select_another_media">Select another file</string>
+    <string name="open_settings">Open settings</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_subtitle">Recognition tuning</string>
+    <string name="back_to_main">Back to main screen</string>
+    <string name="settings_prediction_cooldown">Prediction cooldown</string>
+    <string name="settings_required_matches">Required matches</string>
+    <string name="settings_frame_interval">Frame sample interval</string>
+    <string name="settings_confidence_threshold">Live confidence threshold</string>
+    <string name="settings_ms_value">%1$d ms</string>
+    <string name="settings_percent_value">%1$d%%</string>
 </resources>
