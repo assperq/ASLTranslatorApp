@@ -1,5 +1,12 @@
 package com.example.handtranslator.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -19,16 +26,43 @@ import com.example.handtranslator.translator.MainScreen
 import com.example.handtranslator.translator.TranslatorViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun SetupNavigation(
     navHostController: NavHostController,
     hasCameraPermission : Boolean,
     ensureCameraPermission : () -> Unit,
+    lifecycleOwner: LifecycleOwner,
     translatorViewModel: TranslatorViewModel = koinViewModel(),
 ) {
-    NavHost(navHostController, Routes.MainScreen.route) {
+    NavHost(navHostController,
+        Routes.MainScreen.route,
+        enterTransition = {
+            slideIntoContainer(
+                AnimatedContentTransitionScope.SlideDirection.Left,
+                animationSpec = tween(350, easing = FastOutSlowInEasing)
+            )
+        },
+        exitTransition = {
+            slideOutOfContainer(
+                AnimatedContentTransitionScope.SlideDirection.Left,
+                animationSpec = tween(350, easing = FastOutSlowInEasing)
+            )
+        },
+        popEnterTransition = {
+            slideIntoContainer(
+                AnimatedContentTransitionScope.SlideDirection.Right,
+                animationSpec = tween(350, easing = FastOutSlowInEasing)
+            )
+        },
+        popExitTransition = {
+            slideOutOfContainer(
+                AnimatedContentTransitionScope.SlideDirection.Right,
+                animationSpec = tween(350, easing = FastOutSlowInEasing)
+            )
+        }
+    ) {
         composable(Routes.MainScreen.route) {
-            val lifecycleOwner = LocalContext.current.applicationContext as LifecycleOwner
             Scaffold { innerPadding ->
                 Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
                     MainScreen(

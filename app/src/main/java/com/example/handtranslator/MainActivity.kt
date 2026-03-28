@@ -48,6 +48,7 @@ class MainActivity : ComponentActivity() {
                     navHostController,
                     hasCameraPermission,
                     ::ensureCameraPermission,
+                    this@MainActivity,
                     viewModel
                 )
             }

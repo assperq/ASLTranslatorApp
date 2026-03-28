@@ -1,4 +1,5 @@
 import org.gradle.kotlin.dsl.implementation
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.application)
@@ -36,11 +37,17 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
-        //jvmTarget = 11
+        //jvmTarget = "11"
     }
     buildFeatures {
         compose = true
         mlModelBinding = true
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
     }
 }
 

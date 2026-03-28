@@ -8,7 +8,7 @@ import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 
 class AslClassifier(context: Context) {
 
-    private val model = AslModel.newInstance(context)
+    private var model: AslModel? = AslModel.newInstance(context)
 
     data class PredictionResult(
         val index: Int,
@@ -17,24 +17,30 @@ class AslClassifier(context: Context) {
 
 
     fun predict(features: FloatArray): PredictionResult {
+        if (features.size != FEATURE_VECTOR_SIZE) {
+            return PredictionResult(index = -1, confidence = 0f)
+        }
+
+        val currentModel = model ?: return PredictionResult(index = -1, confidence = 0f)
+
         val byteBuffer = floatArrayToByteBuffer(features)
 
-        // Создаём TensorBuffer для входа
         val inputFeature = TensorBuffer.createFixedSize(intArrayOf(1, 210), DataType.FLOAT32)
         inputFeature.loadBuffer(byteBuffer)
 
-        // Инференс
-        val outputs = model.process(inputFeature)
-        val outputFeature = outputs.outputFeature0AsTensorBuffer
-
-        // Находим индекс с максимальной вероятностью
-        val probabilities = outputFeature.floatArray
+        val outputs = currentModel.process(inputFeature)
+        val probabilities = outputs.outputFeature0AsTensorBuffer.floatArray
         val predictedIndex = probabilities.indices.maxByOrNull { probabilities[it] } ?: -1
         val confidence = probabilities.getOrNull(predictedIndex) ?: 0f
         return PredictionResult(predictedIndex, confidence)
     }
 
     fun close() {
-        model.close()
+        model?.close()
+        model = null
+    }
+
+    private companion object {
+        const val FEATURE_VECTOR_SIZE = 210
     }
 }
