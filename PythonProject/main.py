@@ -40,7 +40,7 @@ def main():
     # 1. Обучение и сохранение модели
     # print("🚀 Обучение нейронной сети...")
     hands = create_mediapipe_hands()
-    createLandMarksFromPath(r'C:\Users\SystemX\programming\Diplom\DATA', hands)
+    #createLandMarksFromPath(r'C:\Users\SystemX\programming\Diplom\DATA', hands)
 
     create_and_train_nn(
         csv_path='asl_landmarks_dataset_210.csv',

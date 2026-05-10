@@ -4,7 +4,7 @@ from pathlib import Path
 from itertools import combinations
 from math import sqrt
 
-def createLandMarksFromPath(dataset_path: str, hands) -> None:
+def createLandMarksFromPath(dataset_path: str, hands: object) -> None:
     """
     Создает CSV с 210 признаками для каждого изображения из датасета ASL.
 
