@@ -88,10 +88,32 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
+    val photoConfidenceThreshold = dataStoreManager.getPhotoConfidenceThreshold()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.35f)
+    fun setPhotoConfidenceThreshold(value: Float) {
+        viewModelScope.launch(Dispatchers.IO) { dataStoreManager.setPhotoConfidenceThreshold(value) }
+    }
+
+    val videoConfidenceThreshold = dataStoreManager.getVideoConfidenceThreshold()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.2f)
+    fun setVideoConfidenceThreshold(value: Float) {
+        viewModelScope.launch(Dispatchers.IO) { dataStoreManager.setVideoConfidenceThreshold(value) }
+    }
+
+    val videoFrameSampleIntervalMs = dataStoreManager.getVideoFrameSampleInterval()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 1500L)
+    fun setVideoFrameSampleIntervalMs(value: Long) {
+        viewModelScope.launch(Dispatchers.IO) { dataStoreManager.setVideoFrameSampleInterval(value) }
+    }
+
+    val videoPreviewFillEnabled = dataStoreManager.getVideoPreviewFillEnabled()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+    fun setVideoPreviewFillEnabled(enabled: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) { dataStoreManager.setVideoPreviewFillEnabled(enabled) }
+    }
+
     private companion object {
         const val SLIDING_WINDOW_SIZE = 3
-        const val MEDIA_CONFIDENCE_THRESHOLD = 0.35f
-        const val MEDIA_FALLBACK_CONFIDENCE_THRESHOLD = 0.2f
     }
 
     private data class PendingPrediction(
@@ -335,7 +357,7 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
     private fun processPhoto(uri: Uri) {
         mediaProcessingJob = viewModelScope.launch(Dispatchers.Default) {
             val bitmap = loadBitmapFromUri(getApplication(), uri) ?: return@launch
-            processBitmapForPrediction(bitmap, updateLandmarks = true)
+            processBitmapForPrediction(bitmap, true, photoConfidenceThreshold.value, videoConfidenceThreshold.value)
         }
     }
 
@@ -353,9 +375,9 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
                         MediaMetadataRetriever.OPTION_CLOSEST_SYNC
                     )
                     if (frameBitmap != null) {
-                        processBitmapForPrediction(frameBitmap, updateLandmarks = false)
+                        processBitmapForPrediction(frameBitmap, false, photoConfidenceThreshold.value, videoConfidenceThreshold.value)
                     }
-                    frameTimeMs += 1500L
+                    frameTimeMs += videoFrameSampleIntervalMs.value
                 }
             } catch (e: Exception) {
                 Log.e("Media", "Failed to process video frames", e)
@@ -365,7 +387,12 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
-    private suspend fun processBitmapForPrediction(bitmap: Bitmap, updateLandmarks: Boolean) {
+    private suspend fun processBitmapForPrediction(
+        bitmap: Bitmap,
+        updateLandmarks: Boolean,
+        primaryConfidenceThreshold: Float,
+        fallbackConfidenceThreshold: Float
+    ) {
         val detectedLandmarks = handLandmarkerHelper.detect(bitmap)
         if (updateLandmarks) {
             withContext(Dispatchers.Main) {
@@ -373,8 +400,8 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
             }
         }
         if (!detectedLandmarks.isNullOrEmpty()) {
-            val predictedLetter = predictLetter(detectedLandmarks, MEDIA_CONFIDENCE_THRESHOLD)?.letter
-                ?: predictLetter(detectedLandmarks, MEDIA_FALLBACK_CONFIDENCE_THRESHOLD)?.letter
+            val predictedLetter = predictLetter(detectedLandmarks, primaryConfidenceThreshold)?.letter
+                ?: predictLetter(detectedLandmarks, fallbackConfidenceThreshold)?.letter
                 ?: return
             withContext(Dispatchers.Main) {
                 onRecognizeLetter(predictedLetter)

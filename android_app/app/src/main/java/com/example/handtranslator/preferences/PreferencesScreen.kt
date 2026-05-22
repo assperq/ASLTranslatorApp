@@ -13,6 +13,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,10 +30,18 @@ fun PreferencesScreen(
     requiredMatches: Int,
     frameSampleIntervalMs: Long,
     liveConfidenceThreshold: Float,
+    photoConfidenceThreshold: Float,
+    videoConfidenceThreshold: Float,
+    videoFrameSampleIntervalMs: Long,
+    videoPreviewFillEnabled: Boolean,
     onPredictionCooldownChange: (Long) -> Unit,
     onRequiredMatchesChange: (Int) -> Unit,
     onFrameSampleIntervalMsChange: (Long) -> Unit,
     onLiveConfidenceThresholdChange: (Float) -> Unit,
+    onPhotoConfidenceThresholdChange: (Float) -> Unit,
+    onVideoConfidenceThresholdChange: (Float) -> Unit,
+    onVideoFrameSampleIntervalMsChange: (Long) -> Unit,
+    onVideoPreviewFillEnabledChange: (Boolean) -> Unit,
     onBackClick: () -> Unit,
 ) {
     Surface(
@@ -82,6 +91,54 @@ fun PreferencesScreen(
                 steps = 15,
                 onValueChange = { onLiveConfidenceThresholdChange((it * 100).toInt() / 100f) }
             )
+            Text(stringResource(R.string.settings_media_section), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            SettingsSliderCard(
+                title = stringResource(R.string.settings_photo_confidence_threshold),
+                value = stringResource(R.string.settings_percent_value, (photoConfidenceThreshold * 100).toInt()),
+                sliderValue = photoConfidenceThreshold,
+                valueRange = 0.1f..0.95f,
+                steps = 16,
+                onValueChange = { onPhotoConfidenceThresholdChange((it * 100).toInt() / 100f) }
+            )
+            SettingsSliderCard(
+                title = stringResource(R.string.settings_video_confidence_threshold),
+                value = stringResource(R.string.settings_percent_value, (videoConfidenceThreshold * 100).toInt()),
+                sliderValue = videoConfidenceThreshold,
+                valueRange = 0.05f..0.9f,
+                steps = 16,
+                onValueChange = { onVideoConfidenceThresholdChange((it * 100).toInt() / 100f) }
+            )
+            SettingsSliderCard(
+                title = stringResource(R.string.settings_video_frame_interval),
+                value = stringResource(R.string.settings_ms_value, videoFrameSampleIntervalMs),
+                sliderValue = videoFrameSampleIntervalMs.toFloat(),
+                valueRange = 300f..3000f,
+                steps = 17,
+                onValueChange = { onVideoFrameSampleIntervalMsChange(it.toLong()) }
+            )
+            SettingsToggleCard(
+                title = stringResource(R.string.settings_video_resize_mode),
+                subtitle = if (videoPreviewFillEnabled) stringResource(R.string.settings_video_fill) else stringResource(R.string.settings_video_fit),
+                checked = videoPreviewFillEnabled,
+                onCheckedChange = onVideoPreviewFillEnabledChange
+            )
+        }
+    }
+}
+
+@Composable
+private fun SettingsToggleCard(title: String, subtitle: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Surface(shape = RoundedCornerShape(20.dp), tonalElevation = 4.dp, color = MaterialTheme.colorScheme.surface) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text(text = title, style = MaterialTheme.typography.titleMedium)
+                Text(text = subtitle, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary)
+            }
+            Switch(checked = checked, onCheckedChange = onCheckedChange)
         }
     }
 }

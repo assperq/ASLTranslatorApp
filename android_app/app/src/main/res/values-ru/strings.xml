@@ -31,6 +31,13 @@
     <string name="settings_required_matches">Требуемые совпадения</string>
     <string name="settings_frame_interval">Интервал анализа кадров</string>
     <string name="settings_confidence_threshold">Порог уверенности</string>
+    <string name="settings_media_section">Распознавание фото и видео</string>
+    <string name="settings_photo_confidence_threshold">Порог уверенности для фото</string>
+    <string name="settings_video_confidence_threshold">Резервный порог для видео</string>
+    <string name="settings_video_frame_interval">Интервал кадров видео</string>
+    <string name="settings_video_resize_mode">Режим отображения видео</string>
+    <string name="settings_video_fit">Вписать в рамку</string>
+    <string name="settings_video_fill">Заполнить рамку (обрезка)</string>
     <string name="settings_ms_value">%1$d мс</string>
     <string name="settings_percent_value">%1$d%%</string>
     <string name="test_title">ASL тест</string>

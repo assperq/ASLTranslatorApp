@@ -31,6 +31,13 @@
     <string name="settings_required_matches">Required matches</string>
     <string name="settings_frame_interval">Frame sample interval</string>
     <string name="settings_confidence_threshold">Live confidence threshold</string>
+    <string name="settings_media_section">Photo and video recognition</string>
+    <string name="settings_photo_confidence_threshold">Photo confidence threshold</string>
+    <string name="settings_video_confidence_threshold">Video fallback threshold</string>
+    <string name="settings_video_frame_interval">Video frame interval</string>
+    <string name="settings_video_resize_mode">Video display mode</string>
+    <string name="settings_video_fit">Fit inside frame</string>
+    <string name="settings_video_fill">Fill frame (crop)</string>
     <string name="settings_ms_value">%1$d ms</string>
     <string name="settings_percent_value">%1$d%%</string>
     <string name="test_title">ASL test</string>

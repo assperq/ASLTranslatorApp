@@ -1,8 +1,6 @@
 package com.example.handtranslator.translator
 
 import android.net.Uri
-import android.widget.MediaController
-import android.widget.VideoView
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -27,6 +25,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +35,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.media3.common.MediaItem
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.media3.ui.PlayerView
 import com.example.handtranslator.Helper.loadBitmapFromUri
 import com.example.handtranslator.R
 
@@ -43,6 +46,7 @@ import com.example.handtranslator.R
 fun MediaPanel(
     selectedMediaUri: Uri?,
     selectedMediaType: SelectedMediaType,
+    videoPreviewFillEnabled: Boolean,
     onSelectMedia: (Uri) -> Unit,
     onSwitchToCameraPreview: () -> Unit,
 ) {
@@ -57,7 +61,7 @@ fun MediaPanel(
     ) {
         if (selectedMediaUri != null && selectedMediaType != SelectedMediaType.NONE) {
             when (selectedMediaType) {
-                SelectedMediaType.VIDEO -> SelectedVideoPreview(selectedMediaUri)
+                SelectedMediaType.VIDEO -> SelectedVideoPreview(selectedMediaUri, videoPreviewFillEnabled)
                 SelectedMediaType.PHOTO -> SelectedPhotoPreview(selectedMediaUri)
                 else -> Unit
             }
@@ -132,31 +136,33 @@ private fun SelectedPhotoPreview(uri: Uri) {
 }
 
 @Composable
-private fun SelectedVideoPreview(uri: Uri) {
+private fun SelectedVideoPreview(uri: Uri, videoPreviewFillEnabled: Boolean) {
     val context = LocalContext.current
-    val mediaController = remember(context) { MediaController(context) }
+    val player = remember(context) {
+        ExoPlayer.Builder(context).build().apply { repeatMode = ExoPlayer.REPEAT_MODE_ALL }
+    }
+    DisposableEffect(player) { onDispose { player.release() } }
 
     AndroidView(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(16.dp)),
         factory = {
-            VideoView(context).apply {
-                setVideoURI(uri)
-                setMediaController(mediaController)
-                mediaController.setAnchorView(this)
-                setOnPreparedListener { mediaPlayer ->
-                    mediaPlayer.isLooping = true
-                    start()
+            PlayerView(context).apply {
+                this.player = player
+                useController = true
+                resizeMode = if (videoPreviewFillEnabled) {
+                    AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                } else {
+                    AspectRatioFrameLayout.RESIZE_MODE_FIT
                 }
             }
         },
-        update = { videoView ->
-            videoView.setVideoURI(uri)
-            videoView.setMediaController(mediaController)
-            mediaController.setAnchorView(videoView)
-            videoView.seekTo(1)
-            videoView.start()
+        update = { playerView ->
+            playerView.resizeMode = if (videoPreviewFillEnabled) AspectRatioFrameLayout.RESIZE_MODE_ZOOM else AspectRatioFrameLayout.RESIZE_MODE_FIT
+            player.setMediaItem(MediaItem.fromUri(uri))
+            player.prepare()
+            player.playWhenReady = true
         }
     )
 }
