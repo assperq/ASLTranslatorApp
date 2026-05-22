@@ -36,6 +36,8 @@ fun SetupNavigation(
     lifecycleOwner: LifecycleOwner,
     translatorViewModel: TranslatorViewModel = koinViewModel(),
 ) {
+    val videoPreviewFillEnabled by translatorViewModel.videoPreviewFillEnabled.collectAsState()
+
     NavHost(navHostController,
         Routes.MainScreen.route,
         enterTransition = {
@@ -121,8 +123,6 @@ fun SetupNavigation(
             val photoConfidenceThreshold by translatorViewModel.photoConfidenceThreshold.collectAsState()
             val videoConfidenceThreshold by translatorViewModel.videoConfidenceThreshold.collectAsState()
             val videoFrameSampleIntervalMs by translatorViewModel.videoFrameSampleIntervalMs.collectAsState()
-            val videoPreviewFillEnabled by translatorViewModel.videoPreviewFillEnabled.collectAsState()
-
             Scaffold { innerPadding ->
                 Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
                     PreferencesScreen(
