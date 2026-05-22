@@ -30,11 +30,14 @@ import com.example.handtranslator.data.preferences.DataStoreManager
 import com.google.mediapipe.tasks.components.containers.NormalizedLandmark
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import java.lang.ref.WeakReference
 import java.net.URI
 import java.util.concurrent.ExecutorService
@@ -111,6 +114,11 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
     fun setVideoPreviewFillEnabled(enabled: Boolean) {
         viewModelScope.launch(Dispatchers.IO) { dataStoreManager.setVideoPreviewFillEnabled(enabled) }
     }
+    val singleFrameRecognitionTimeoutMs = dataStoreManager.getSingleFrameRecognitionTimeoutMs()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 2500L)
+    fun setSingleFrameRecognitionTimeoutMs(value: Long) {
+        viewModelScope.launch(Dispatchers.IO) { dataStoreManager.setSingleFrameRecognitionTimeoutMs(value) }
+    }
 
     private companion object {
         const val SLIDING_WINDOW_SIZE = 3
@@ -154,6 +162,12 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
     var textInput by mutableStateOf("")
         private set
     var landmarks by mutableStateOf<List<NormalizedLandmark>>(emptyList())
+        private set
+    var singleFrameRecognitionResult by mutableStateOf<Letter?>(null)
+        private set
+    var isSingleFrameRecognizing by mutableStateOf(false)
+        private set
+    var singleFrameRecognitionFailed by mutableStateOf(false)
         private set
 
     fun onInputModeChange(mode: InputMode, lifecycleOwner: LifecycleOwner, hasCameraPermission: Boolean) {
@@ -370,6 +384,7 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
                     ?.toLongOrNull() ?: 0L
                 var frameTimeMs = 0L
                 while (frameTimeMs <= durationMs) {
+                    ensureActive()
                     val frameBitmap = retriever.getFrameAtTime(
                         frameTimeMs * 1000,
                         MediaMetadataRetriever.OPTION_CLOSEST_SYNC
@@ -378,6 +393,7 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
                         processBitmapForPrediction(frameBitmap, false, photoConfidenceThreshold.value, videoConfidenceThreshold.value)
                     }
                     frameTimeMs += videoFrameSampleIntervalMs.value
+                    yield()
                 }
             } catch (e: Exception) {
                 Log.e("Media", "Failed to process video frames", e)
@@ -385,6 +401,47 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
                 retriever.release()
             }
         }
+    }
+
+    fun onRecognizeSingleVideoFrame(uri: Uri, positionMs: Long) {
+        mediaProcessingJob?.cancel()
+        isSingleFrameRecognizing = true
+        singleFrameRecognitionFailed = false
+        singleFrameRecognitionResult = null
+        mediaProcessingJob = viewModelScope.launch(Dispatchers.Default) {
+            val retriever = MediaMetadataRetriever()
+            val predictedLetter = withTimeoutOrNull(singleFrameRecognitionTimeoutMs.value) {
+                try {
+                    retriever.setDataSource(getApplication(), uri)
+                    val frameBitmap = retriever.getFrameAtTime(positionMs * 1000, MediaMetadataRetriever.OPTION_CLOSEST)
+                    val detectedLandmarks = frameBitmap?.let { handLandmarkerHelper.detect(it) }
+                    detectedLandmarks?.let {
+                        predictLetter(it, photoConfidenceThreshold.value)?.letter
+                            ?: predictLetter(it, videoConfidenceThreshold.value)?.letter
+                    }
+                } catch (_: Exception) {
+                    null
+                }
+            }
+            retriever.release()
+            withContext(Dispatchers.Main) {
+                isSingleFrameRecognizing = false
+                if (predictedLetter == null) {
+                    singleFrameRecognitionFailed = true
+                    return@withContext
+                }
+                singleFrameRecognitionResult = Letter(
+                    name = predictedLetter,
+                    imageCard = getAslDrawable(getApplication(), predictedLetter)
+                )
+            }
+        }
+    }
+
+    fun dismissSingleFrameRecognitionResult() {
+        singleFrameRecognitionResult = null
+        singleFrameRecognitionFailed = false
+        isSingleFrameRecognizing = false
     }
 
     private suspend fun processBitmapForPrediction(
