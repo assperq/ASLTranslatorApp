@@ -100,10 +100,13 @@ fun SetupNavigation(
                         selectedMediaUri = translatorViewModel.selectedMediaUri,
                         selectedMediaType = translatorViewModel.selectedMediaType,
                         videoPreviewFillEnabled = videoPreviewFillEnabled,
+                        singleFrameRecognitionResult = translatorViewModel.singleFrameRecognitionResult,
                         onSelectMedia = translatorViewModel::onSelectMedia,
                         onSwitchToCameraPreview = {
                             translatorViewModel.onSwitchToCameraPreview(lifecycleOwner, hasCameraPermission)
                         },
+                        onRecognizeCurrentVideoFrame = translatorViewModel::onRecognizeSingleVideoFrame,
+                        onDismissSingleFrameRecognition = translatorViewModel::dismissSingleFrameRecognitionResult,
                         onOpenSettings = {
                             navHostController.navigate(Routes.Preferences.route)
                         },

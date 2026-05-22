@@ -38,6 +38,7 @@ fun MainScreen(
     selectedMediaUri: Uri?,
     selectedMediaType: SelectedMediaType,
     videoPreviewFillEnabled: Boolean,
+    singleFrameRecognitionResult: String?,
     showLandmarks: Boolean,
     onShowLandmarksChange: (Boolean) -> Unit,
     cameraFacing: CameraFacing,
@@ -53,6 +54,8 @@ fun MainScreen(
     onClearRecognizedText: (Boolean) -> Unit,
     onSelectMedia: (Uri) -> Unit,
     onSwitchToCameraPreview: () -> Unit,
+    onRecognizeCurrentVideoFrame: (Uri, Long) -> Unit,
+    onDismissSingleFrameRecognition: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenTest: () -> Unit
 ) {
@@ -98,6 +101,7 @@ fun MainScreen(
                 selectedMediaUri = selectedMediaUri,
                 selectedMediaType = selectedMediaType,
                 videoPreviewFillEnabled = videoPreviewFillEnabled,
+                singleFrameRecognitionResult = singleFrameRecognitionResult,
                 showLandmarks = showLandmarks,
                 onShowLandmarksChange = onShowLandmarksChange,
                 cameraFacing = cameraFacing,
@@ -113,6 +117,8 @@ fun MainScreen(
                 onClearRecognizedText = onClearRecognizedText,
                 onSelectMedia = onSelectMedia,
                 onSwitchToCameraPreview = onSwitchToCameraPreview,
+                onRecognizeCurrentVideoFrame = onRecognizeCurrentVideoFrame,
+                onDismissSingleFrameRecognition = onDismissSingleFrameRecognition,
                 isLandscape = isLandscape,
                 modifier = Modifier.weight(1f)
             )
@@ -161,6 +167,7 @@ fun MainContent(
     selectedMediaUri: Uri?,
     selectedMediaType: SelectedMediaType,
     videoPreviewFillEnabled: Boolean,
+    singleFrameRecognitionResult: String?,
     showLandmarks: Boolean,
     onShowLandmarksChange: (Boolean) -> Unit,
     cameraFacing: CameraFacing,
@@ -176,6 +183,8 @@ fun MainContent(
     onClearRecognizedText: (Boolean) -> Unit,
     onSelectMedia: (Uri) -> Unit,
     onSwitchToCameraPreview: () -> Unit,
+    onRecognizeCurrentVideoFrame: (Uri, Long) -> Unit,
+    onDismissSingleFrameRecognition: () -> Unit,
     isLandscape: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -209,8 +218,11 @@ fun MainContent(
                             selectedMediaUri = selectedMediaUri,
                             selectedMediaType = selectedMediaType,
                             videoPreviewFillEnabled = videoPreviewFillEnabled,
+                            singleFrameRecognitionResult = singleFrameRecognitionResult,
                             onSelectMedia = onSelectMedia,
-                            onSwitchToCameraPreview = onSwitchToCameraPreview
+                            onSwitchToCameraPreview = onSwitchToCameraPreview,
+                            onRecognizeCurrentVideoFrame = onRecognizeCurrentVideoFrame,
+                            onDismissSingleFrameRecognition = onDismissSingleFrameRecognition
                         )
                     }
                 } else {
@@ -261,8 +273,11 @@ fun MainContent(
                             selectedMediaUri = selectedMediaUri,
                             selectedMediaType = selectedMediaType,
                             videoPreviewFillEnabled = videoPreviewFillEnabled,
+                            singleFrameRecognitionResult = singleFrameRecognitionResult,
                             onSelectMedia = onSelectMedia,
-                            onSwitchToCameraPreview = onSwitchToCameraPreview
+                            onSwitchToCameraPreview = onSwitchToCameraPreview,
+                            onRecognizeCurrentVideoFrame = onRecognizeCurrentVideoFrame,
+                            onDismissSingleFrameRecognition = onDismissSingleFrameRecognition
                         )
                     }
                 } else {

@@ -20,13 +20,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
@@ -47,8 +51,11 @@ fun MediaPanel(
     selectedMediaUri: Uri?,
     selectedMediaType: SelectedMediaType,
     videoPreviewFillEnabled: Boolean,
+    singleFrameRecognitionResult: String?,
     onSelectMedia: (Uri) -> Unit,
     onSwitchToCameraPreview: () -> Unit,
+    onRecognizeCurrentVideoFrame: (Uri, Long) -> Unit,
+    onDismissSingleFrameRecognition: () -> Unit
 ) {
     val mediaPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
@@ -61,7 +68,11 @@ fun MediaPanel(
     ) {
         if (selectedMediaUri != null && selectedMediaType != SelectedMediaType.NONE) {
             when (selectedMediaType) {
-                SelectedMediaType.VIDEO -> SelectedVideoPreview(selectedMediaUri, videoPreviewFillEnabled)
+                SelectedMediaType.VIDEO -> SelectedVideoPreview(
+                    selectedMediaUri,
+                    videoPreviewFillEnabled,
+                    onRecognizeCurrentVideoFrame
+                )
                 SelectedMediaType.PHOTO -> SelectedPhotoPreview(selectedMediaUri)
                 else -> Unit
             }
@@ -100,6 +111,17 @@ fun MediaPanel(
                 }
             }
         }
+
+        if (singleFrameRecognitionResult != null) {
+            AlertDialog(
+                onDismissRequest = onDismissSingleFrameRecognition,
+                title = { Text("Распознанный кадр") },
+                text = { Text("Результат: $singleFrameRecognitionResult") },
+                confirmButton = {
+                    TextButton(onClick = onDismissSingleFrameRecognition) { Text("ОК") }
+                }
+            )
+        }
     }
 }
 
@@ -136,33 +158,63 @@ private fun SelectedPhotoPreview(uri: Uri) {
 }
 
 @Composable
-private fun SelectedVideoPreview(uri: Uri, videoPreviewFillEnabled: Boolean) {
+private fun SelectedVideoPreview(
+    uri: Uri,
+    videoPreviewFillEnabled: Boolean,
+    onRecognizeCurrentVideoFrame: (Uri, Long) -> Unit
+) {
     val context = LocalContext.current
     val player = remember(context) {
         ExoPlayer.Builder(context).build().apply { repeatMode = ExoPlayer.REPEAT_MODE_ALL }
     }
+    var isPlaying by remember { mutableStateOf(true) }
     DisposableEffect(player) { onDispose { player.release() } }
 
-    AndroidView(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(16.dp)),
-        factory = {
-            PlayerView(context).apply {
-                this.player = player
-                useController = true
-                resizeMode = if (videoPreviewFillEnabled) {
-                    AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-                } else {
-                    AspectRatioFrameLayout.RESIZE_MODE_FIT
+    Box(modifier = Modifier.fillMaxSize()) {
+        AndroidView(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(16.dp)),
+            factory = {
+                PlayerView(context).apply {
+                    this.player = player
+                    useController = true
+                    resizeMode = if (videoPreviewFillEnabled) {
+                        AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                    } else {
+                        AspectRatioFrameLayout.RESIZE_MODE_FIT
+                    }
                 }
+            },
+            update = { playerView ->
+                playerView.resizeMode = if (videoPreviewFillEnabled) AspectRatioFrameLayout.RESIZE_MODE_ZOOM else AspectRatioFrameLayout.RESIZE_MODE_FIT
+                player.setMediaItem(MediaItem.fromUri(uri))
+                player.prepare()
+                player.playWhenReady = true
             }
-        },
-        update = { playerView ->
-            playerView.resizeMode = if (videoPreviewFillEnabled) AspectRatioFrameLayout.RESIZE_MODE_ZOOM else AspectRatioFrameLayout.RESIZE_MODE_FIT
-            player.setMediaItem(MediaItem.fromUri(uri))
-            player.prepare()
-            player.playWhenReady = true
+        )
+
+        if (!isPlaying) {
+            Button(
+                onClick = {
+                    onRecognizeCurrentVideoFrame(uri, player.currentPosition)
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 24.dp)
+            ) {
+                Text("Распознать кадр")
+            }
         }
-    )
+    }
+
+    DisposableEffect(player) {
+        val listener = object : androidx.media3.common.Player.Listener {
+            override fun onIsPlayingChanged(playing: Boolean) {
+                isPlaying = playing
+            }
+        }
+        player.addListener(listener)
+        onDispose { player.removeListener(listener) }
+    }
 }

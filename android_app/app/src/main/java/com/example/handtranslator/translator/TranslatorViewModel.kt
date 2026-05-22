@@ -30,10 +30,12 @@ import com.example.handtranslator.data.preferences.DataStoreManager
 import com.google.mediapipe.tasks.components.containers.NormalizedLandmark
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 import kotlinx.coroutines.withContext
 import java.lang.ref.WeakReference
 import java.net.URI
@@ -154,6 +156,8 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
     var textInput by mutableStateOf("")
         private set
     var landmarks by mutableStateOf<List<NormalizedLandmark>>(emptyList())
+        private set
+    var singleFrameRecognitionResult by mutableStateOf<String?>(null)
         private set
 
     fun onInputModeChange(mode: InputMode, lifecycleOwner: LifecycleOwner, hasCameraPermission: Boolean) {
@@ -370,6 +374,7 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
                     ?.toLongOrNull() ?: 0L
                 var frameTimeMs = 0L
                 while (frameTimeMs <= durationMs) {
+                    ensureActive()
                     val frameBitmap = retriever.getFrameAtTime(
                         frameTimeMs * 1000,
                         MediaMetadataRetriever.OPTION_CLOSEST_SYNC
@@ -378,6 +383,7 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
                         processBitmapForPrediction(frameBitmap, false, photoConfidenceThreshold.value, videoConfidenceThreshold.value)
                     }
                     frameTimeMs += videoFrameSampleIntervalMs.value
+                    yield()
                 }
             } catch (e: Exception) {
                 Log.e("Media", "Failed to process video frames", e)
@@ -385,6 +391,33 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
                 retriever.release()
             }
         }
+    }
+
+    fun onRecognizeSingleVideoFrame(uri: Uri, positionMs: Long) {
+        mediaProcessingJob?.cancel()
+        mediaProcessingJob = viewModelScope.launch(Dispatchers.Default) {
+            val retriever = MediaMetadataRetriever()
+            val predictedLetter = try {
+                retriever.setDataSource(getApplication(), uri)
+                val frameBitmap = retriever.getFrameAtTime(positionMs * 1000, MediaMetadataRetriever.OPTION_CLOSEST)
+                val detectedLandmarks = frameBitmap?.let { handLandmarkerHelper.detect(it) }
+                detectedLandmarks?.let {
+                    predictLetter(it, photoConfidenceThreshold.value)?.letter
+                        ?: predictLetter(it, videoConfidenceThreshold.value)?.letter
+                }
+            } catch (_: Exception) {
+                null
+            } finally {
+                retriever.release()
+            }
+            withContext(Dispatchers.Main) {
+                singleFrameRecognitionResult = predictedLetter
+            }
+        }
+    }
+
+    fun dismissSingleFrameRecognitionResult() {
+        singleFrameRecognitionResult = null
     }
 
     private suspend fun processBitmapForPrediction(
