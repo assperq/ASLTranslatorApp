@@ -30,6 +30,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -224,7 +225,7 @@ private fun SelectedVideoPreview(
                     onRecognizeCurrentVideoFrame(uri, player.currentPosition)
                 },
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
+                    .align(Alignment.CenterEnd)
                     .padding(12.dp)
                     .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.85f), CircleShape)
             ) {

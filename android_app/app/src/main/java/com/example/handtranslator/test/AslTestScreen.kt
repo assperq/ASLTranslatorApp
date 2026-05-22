@@ -51,6 +51,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.handtranslator.R
 import kotlinx.coroutines.delay
@@ -132,11 +133,26 @@ fun AslTestScreen(onBack: () -> Unit, viewModel: AslTestViewModel = androidx.lif
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back_to_main))
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+
+                IconButton(
+                    onClick = onBack,
+                    modifier = Modifier.align(Alignment.CenterStart)
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(R.string.back_to_main)
+                    )
                 }
-                Text(stringResource(R.string.test_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
+
+                Text(
+                    text = stringResource(R.string.test_title),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.ExtraBold,
+                    modifier = Modifier.align(Alignment.Center)
+                )
             }
 
             AppStyledBestScore(bestStreak = bestStreak)
