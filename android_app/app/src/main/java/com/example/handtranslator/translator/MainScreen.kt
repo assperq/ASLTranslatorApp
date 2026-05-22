@@ -3,6 +3,7 @@ package com.example.handtranslator.translator
 import android.content.res.Configuration
 import android.net.Uri
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,6 +22,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -50,12 +52,28 @@ fun MainScreen(
     onClearRecognizedText: (Boolean) -> Unit,
     onSelectMedia: (Uri) -> Unit,
     onSwitchToCameraPreview: () -> Unit,
-    onOpenSettings: () -> Unit
+    onOpenSettings: () -> Unit,
+    onOpenTest: () -> Unit
 ) {
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
+    var totalHorizontalDrag = 0f
+
     Surface(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onHorizontalDrag = { _, dragAmount ->
+                        totalHorizontalDrag += dragAmount
+                    },
+                    onDragEnd = {
+                        if (totalHorizontalDrag < -180f) onOpenTest()
+                        totalHorizontalDrag = 0f
+                    },
+                    onDragCancel = { totalHorizontalDrag = 0f }
+                )
+            },
         color = MaterialTheme.colorScheme.background
     ) {
         Column(

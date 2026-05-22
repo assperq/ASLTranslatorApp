@@ -33,4 +33,10 @@
     <string name="settings_confidence_threshold">Live confidence threshold</string>
     <string name="settings_ms_value">%1$d ms</string>
     <string name="settings_percent_value">%1$d%%</string>
+    <string name="test_title">ASL test</string>
+    <string name="test_gesture_image">Gesture card</string>
+    <string name="streak_current">Current streak: %1$d</string>
+    <string name="streak_best">Best streak: %1$d</string>
+    <string name="answer_correct">Correct!</string>
+    <string name="answer_incorrect">Incorrect. Correct letter: %1$s</string>
 </resources>
