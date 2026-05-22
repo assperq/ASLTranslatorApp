@@ -6,16 +6,25 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -29,10 +38,18 @@ fun PreferencesScreen(
     requiredMatches: Int,
     frameSampleIntervalMs: Long,
     liveConfidenceThreshold: Float,
+    photoConfidenceThreshold: Float,
+    videoConfidenceThreshold: Float,
+    videoFrameSampleIntervalMs: Long,
+    videoPreviewFillEnabled: Boolean,
     onPredictionCooldownChange: (Long) -> Unit,
     onRequiredMatchesChange: (Int) -> Unit,
     onFrameSampleIntervalMsChange: (Long) -> Unit,
     onLiveConfidenceThresholdChange: (Float) -> Unit,
+    onPhotoConfidenceThresholdChange: (Float) -> Unit,
+    onVideoConfidenceThresholdChange: (Float) -> Unit,
+    onVideoFrameSampleIntervalMsChange: (Long) -> Unit,
+    onVideoPreviewFillEnabledChange: (Boolean) -> Unit,
     onBackClick: () -> Unit,
 ) {
     Surface(
@@ -42,10 +59,12 @@ fun PreferencesScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             SettingsHeader(onBackClick = onBackClick)
+            Text(stringResource(R.string.settings_live_section), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
 
             SettingsSliderCard(
                 title = stringResource(R.string.settings_prediction_cooldown),
@@ -53,7 +72,9 @@ fun PreferencesScreen(
                 sliderValue = predictionCooldown.toFloat(),
                 valueRange = 100f..1000f,
                 steps = 17,
-                onValueChange = { onPredictionCooldownChange(it.toLong()) }
+                onValueChange = { onPredictionCooldownChange(it.toLong()) },
+                descriptionTitle = stringResource(R.string.settings_prediction_cooldown),
+                descriptionText = stringResource(R.string.settings_prediction_cooldown_desc)
             )
 
             SettingsSliderCard(
@@ -62,7 +83,9 @@ fun PreferencesScreen(
                 sliderValue = requiredMatches.toFloat(),
                 valueRange = 1f..6f,
                 steps = 4,
-                onValueChange = { onRequiredMatchesChange(it.toInt()) }
+                onValueChange = { onRequiredMatchesChange(it.toInt()) },
+                descriptionTitle = stringResource(R.string.settings_required_matches),
+                descriptionText = stringResource(R.string.settings_required_matches_desc)
             )
 
             SettingsSliderCard(
@@ -71,7 +94,9 @@ fun PreferencesScreen(
                 sliderValue = frameSampleIntervalMs.toFloat(),
                 valueRange = 50f..220f,
                 steps = 16,
-                onValueChange = { onFrameSampleIntervalMsChange(it.toLong()) }
+                onValueChange = { onFrameSampleIntervalMsChange(it.toLong()) },
+                descriptionTitle = stringResource(R.string.settings_frame_interval),
+                descriptionText = stringResource(R.string.settings_frame_interval_desc)
             )
 
             SettingsSliderCard(
@@ -80,10 +105,80 @@ fun PreferencesScreen(
                 sliderValue = liveConfidenceThreshold,
                 valueRange = 0.1f..0.9f,
                 steps = 15,
-                onValueChange = { onLiveConfidenceThresholdChange((it * 100).toInt() / 100f) }
+                onValueChange = { onLiveConfidenceThresholdChange((it * 100).toInt() / 100f) },
+                descriptionTitle = stringResource(R.string.settings_confidence_threshold),
+                descriptionText = stringResource(R.string.settings_confidence_threshold_desc)
+            )
+            Text(stringResource(R.string.settings_media_section), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            SettingsSliderCard(
+                title = stringResource(R.string.settings_photo_confidence_threshold),
+                value = stringResource(R.string.settings_percent_value, (photoConfidenceThreshold * 100).toInt()),
+                sliderValue = photoConfidenceThreshold,
+                valueRange = 0.1f..0.95f,
+                steps = 16,
+                onValueChange = { onPhotoConfidenceThresholdChange((it * 100).toInt() / 100f) },
+                descriptionTitle = stringResource(R.string.settings_photo_confidence_threshold),
+                descriptionText = stringResource(R.string.settings_photo_confidence_threshold_desc)
+            )
+            SettingsSliderCard(
+                title = stringResource(R.string.settings_video_confidence_threshold),
+                value = stringResource(R.string.settings_percent_value, (videoConfidenceThreshold * 100).toInt()),
+                sliderValue = videoConfidenceThreshold,
+                valueRange = 0.05f..0.9f,
+                steps = 16,
+                onValueChange = { onVideoConfidenceThresholdChange((it * 100).toInt() / 100f) },
+                descriptionTitle = stringResource(R.string.settings_video_confidence_threshold),
+                descriptionText = stringResource(R.string.settings_video_confidence_threshold_desc)
+            )
+            SettingsSliderCard(
+                title = stringResource(R.string.settings_video_frame_interval),
+                value = stringResource(R.string.settings_ms_value, videoFrameSampleIntervalMs),
+                sliderValue = videoFrameSampleIntervalMs.toFloat(),
+                valueRange = 300f..3000f,
+                steps = 17,
+                onValueChange = { onVideoFrameSampleIntervalMsChange(it.toLong()) },
+                descriptionTitle = stringResource(R.string.settings_video_frame_interval),
+                descriptionText = stringResource(R.string.settings_video_frame_interval_desc)
+            )
+            SettingsToggleCard(
+                title = stringResource(R.string.settings_video_resize_mode),
+                subtitle = if (videoPreviewFillEnabled) stringResource(R.string.settings_video_fill) else stringResource(R.string.settings_video_fit),
+                checked = videoPreviewFillEnabled,
+                onCheckedChange = onVideoPreviewFillEnabledChange,
+                descriptionTitle = stringResource(R.string.settings_video_resize_mode),
+                descriptionText = stringResource(R.string.settings_video_resize_mode_desc)
             )
         }
     }
+}
+
+@Composable
+private fun SettingsToggleCard(
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    descriptionTitle: String,
+    descriptionText: String
+) {
+    var showDialog by remember { mutableStateOf(false) }
+    Surface(shape = RoundedCornerShape(20.dp), tonalElevation = 4.dp, color = MaterialTheme.colorScheme.surface) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(text = title, style = MaterialTheme.typography.titleMedium)
+                    InfoIcon(onClick = { showDialog = true })
+                }
+                Text(text = subtitle, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary)
+            }
+            Switch(checked = checked, onCheckedChange = onCheckedChange)
+        }
+    }
+    SettingInfoDialog(showDialog, descriptionTitle, descriptionText) { showDialog = false }
 }
 
 @Composable
@@ -133,7 +228,10 @@ private fun SettingsSliderCard(
     valueRange: ClosedFloatingPointRange<Float>,
     steps: Int,
     onValueChange: (Float) -> Unit,
+    descriptionTitle: String,
+    descriptionText: String
 ) {
+    var showDialog by remember { mutableStateOf(false) }
     Surface(
         shape = RoundedCornerShape(20.dp),
         tonalElevation = 4.dp,
@@ -150,10 +248,16 @@ private fun SettingsSliderCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    InfoIcon(onClick = { showDialog = true })
+                }
                 Text(
                     text = value,
                     style = MaterialTheme.typography.labelLarge,
@@ -170,4 +274,32 @@ private fun SettingsSliderCard(
             )
         }
     }
+    SettingInfoDialog(showDialog, descriptionTitle, descriptionText) { showDialog = false }
+}
+
+@Composable
+private fun InfoIcon(onClick: () -> Unit) {
+    IconButton(onClick = onClick, modifier = Modifier.size(22.dp)) {
+        Icon(imageVector = Icons.Outlined.Info, contentDescription = stringResource(R.string.settings_info_icon_desc))
+    }
+}
+
+@Composable
+private fun SettingInfoDialog(
+    show: Boolean,
+    title: String,
+    description: String,
+    onDismiss: () -> Unit
+) {
+    if (!show) return
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title, style = MaterialTheme.typography.titleLarge) },
+        text = { Text(description, style = MaterialTheme.typography.bodyLarge) },
+        confirmButton = {
+            androidx.compose.material3.TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.settings_dialog_close))
+            }
+        }
+    )
 }

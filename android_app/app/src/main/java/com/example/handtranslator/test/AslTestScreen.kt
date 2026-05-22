@@ -1,7 +1,5 @@
 package com.example.handtranslator.test
 
-import android.content.Context
-import androidx.annotation.DrawableRes
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -57,29 +55,13 @@ import androidx.compose.ui.unit.dp
 import com.example.handtranslator.R
 import kotlinx.coroutines.delay
 
-private const val PREFS = "asl_test_prefs"
-private const val BEST_STREAK_KEY = "best_streak"
-private const val ROUND_DURATION = 5L
-
-private data class AslCard(val letter: String, @DrawableRes val drawableRes: Int)
-private enum class GameState { READY, PLAYING }
-private enum class AnswerState { IDLE, CORRECT, WRONG, TIMEOUT }
-
-private val deck = listOf(
-    AslCard("A", R.drawable.asl_a), AslCard("B", R.drawable.asl_b), AslCard("C", R.drawable.asl_c), AslCard("D", R.drawable.asl_d), AslCard("E", R.drawable.asl_e),
-    AslCard("F", R.drawable.asl_f), AslCard("G", R.drawable.asl_g), AslCard("H", R.drawable.asl_h), AslCard("I", R.drawable.asl_i), AslCard("J", R.drawable.asl_j),
-    AslCard("K", R.drawable.asl_k), AslCard("L", R.drawable.asl_l), AslCard("M", R.drawable.asl_m), AslCard("N", R.drawable.asl_n), AslCard("O", R.drawable.asl_o),
-    AslCard("P", R.drawable.asl_p), AslCard("Q", R.drawable.asl_q), AslCard("R", R.drawable.asl_r), AslCard("S", R.drawable.asl_s), AslCard("T", R.drawable.asl_t),
-    AslCard("U", R.drawable.asl_u), AslCard("V", R.drawable.asl_v), AslCard("W", R.drawable.asl_w), AslCard("X", R.drawable.asl_x), AslCard("Y", R.drawable.asl_y), AslCard("Z", R.drawable.asl_z)
-)
-
 @Composable
-fun AslTestScreen(onBack: () -> Unit) {
+fun AslTestScreen(onBack: () -> Unit, viewModel: AslTestViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
     val context = LocalContext.current
     var dragOffset by remember { mutableFloatStateOf(0f) }
     var gameState by rememberSaveable { mutableStateOf(GameState.READY) }
     var currentStreak by rememberSaveable { mutableIntStateOf(0) }
-    var bestStreak by remember { mutableIntStateOf(readBestStreak(context)) }
+    var bestStreak by remember { mutableIntStateOf(viewModel.readBestStreak()) }
     var currentCard by remember { mutableStateOf(deck.first()) }
     var options by remember { mutableStateOf(listOf("A", "B")) }
     var answerState by rememberSaveable { mutableStateOf(AnswerState.IDLE) }
@@ -97,7 +79,7 @@ fun AslTestScreen(onBack: () -> Unit) {
         ensureDeck()
         val next = remainingCards.removeAt(0)
         currentCard = next
-        options = generateOptions(next.letter)
+        options = viewModel.generateOptions(next.letter)
         secondsLeft = ROUND_DURATION
         answerState = AnswerState.IDLE
     }
@@ -186,7 +168,7 @@ fun AslTestScreen(onBack: () -> Unit) {
                                 currentStreak += 1
                                 if (currentStreak > bestStreak) {
                                     bestStreak = currentStreak
-                                    saveBestStreak(context, bestStreak)
+                                    viewModel.saveBestStreak(bestStreak)
                                 }
                             } else {
                                 currentStreak = 0
@@ -271,10 +253,3 @@ private fun AnimatedOptionChip(letter: String, secondsLeft: Long, onPick: () -> 
     }
 }
 
-private fun generateOptions(correctLetter: String): List<String> {
-    val wrongLetter = deck.map { it.letter }.filter { it != correctLetter }.random()
-    return listOf(correctLetter, wrongLetter).shuffled()
-}
-
-private fun readBestStreak(context: Context): Int = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getInt(BEST_STREAK_KEY, 0)
-private fun saveBestStreak(context: Context, value: Int) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt(BEST_STREAK_KEY, value).apply()

@@ -36,6 +36,8 @@ fun SetupNavigation(
     lifecycleOwner: LifecycleOwner,
     translatorViewModel: TranslatorViewModel = koinViewModel(),
 ) {
+    val videoPreviewFillEnabled by translatorViewModel.videoPreviewFillEnabled.collectAsState()
+
     NavHost(navHostController,
         Routes.MainScreen.route,
         enterTransition = {
@@ -97,6 +99,7 @@ fun SetupNavigation(
                         cameraContentMode = translatorViewModel.cameraContentMode,
                         selectedMediaUri = translatorViewModel.selectedMediaUri,
                         selectedMediaType = translatorViewModel.selectedMediaType,
+                        videoPreviewFillEnabled = videoPreviewFillEnabled,
                         onSelectMedia = translatorViewModel::onSelectMedia,
                         onSwitchToCameraPreview = {
                             translatorViewModel.onSwitchToCameraPreview(lifecycleOwner, hasCameraPermission)
@@ -117,7 +120,9 @@ fun SetupNavigation(
             val requiredMatches by translatorViewModel.requiredMatches.collectAsState()
             val frameSampleIntervalMs by translatorViewModel.frameSampleIntervalMs.collectAsState()
             val liveConfidenceThreshold by translatorViewModel.liveConfidenceThreshold.collectAsState()
-
+            val photoConfidenceThreshold by translatorViewModel.photoConfidenceThreshold.collectAsState()
+            val videoConfidenceThreshold by translatorViewModel.videoConfidenceThreshold.collectAsState()
+            val videoFrameSampleIntervalMs by translatorViewModel.videoFrameSampleIntervalMs.collectAsState()
             Scaffold { innerPadding ->
                 Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
                     PreferencesScreen(
@@ -125,10 +130,18 @@ fun SetupNavigation(
                         requiredMatches = requiredMatches,
                         frameSampleIntervalMs = frameSampleIntervalMs,
                         liveConfidenceThreshold = liveConfidenceThreshold,
+                        photoConfidenceThreshold = photoConfidenceThreshold,
+                        videoConfidenceThreshold = videoConfidenceThreshold,
+                        videoFrameSampleIntervalMs = videoFrameSampleIntervalMs,
+                        videoPreviewFillEnabled = videoPreviewFillEnabled,
                         onPredictionCooldownChange = translatorViewModel::setPredictionCooldown,
                         onRequiredMatchesChange = translatorViewModel::setRequiredMatches,
                         onFrameSampleIntervalMsChange = translatorViewModel::setFrameSampleIntervalMs,
                         onLiveConfidenceThresholdChange = translatorViewModel::setLiveConfidenceThreshold,
+                        onPhotoConfidenceThresholdChange = translatorViewModel::setPhotoConfidenceThreshold,
+                        onVideoConfidenceThresholdChange = translatorViewModel::setVideoConfidenceThreshold,
+                        onVideoFrameSampleIntervalMsChange = translatorViewModel::setVideoFrameSampleIntervalMs,
+                        onVideoPreviewFillEnabledChange = translatorViewModel::setVideoPreviewFillEnabled,
                         onBackClick = {
                             navHostController.popBackStack()
                         }

@@ -37,6 +37,7 @@ fun MainScreen(
     cameraContentMode: CameraContentMode,
     selectedMediaUri: Uri?,
     selectedMediaType: SelectedMediaType,
+    videoPreviewFillEnabled: Boolean,
     showLandmarks: Boolean,
     onShowLandmarksChange: (Boolean) -> Unit,
     cameraFacing: CameraFacing,
@@ -96,6 +97,7 @@ fun MainScreen(
                 cameraContentMode = cameraContentMode,
                 selectedMediaUri = selectedMediaUri,
                 selectedMediaType = selectedMediaType,
+                videoPreviewFillEnabled = videoPreviewFillEnabled,
                 showLandmarks = showLandmarks,
                 onShowLandmarksChange = onShowLandmarksChange,
                 cameraFacing = cameraFacing,
@@ -158,6 +160,7 @@ fun MainContent(
     cameraContentMode: CameraContentMode,
     selectedMediaUri: Uri?,
     selectedMediaType: SelectedMediaType,
+    videoPreviewFillEnabled: Boolean,
     showLandmarks: Boolean,
     onShowLandmarksChange: (Boolean) -> Unit,
     cameraFacing: CameraFacing,
@@ -205,6 +208,7 @@ fun MainContent(
                         MediaPanel(
                             selectedMediaUri = selectedMediaUri,
                             selectedMediaType = selectedMediaType,
+                            videoPreviewFillEnabled = videoPreviewFillEnabled,
                             onSelectMedia = onSelectMedia,
                             onSwitchToCameraPreview = onSwitchToCameraPreview
                         )
@@ -256,6 +260,7 @@ fun MainContent(
                         MediaPanel(
                             selectedMediaUri = selectedMediaUri,
                             selectedMediaType = selectedMediaType,
+                            videoPreviewFillEnabled = videoPreviewFillEnabled,
                             onSelectMedia = onSelectMedia,
                             onSwitchToCameraPreview = onSwitchToCameraPreview
                         )

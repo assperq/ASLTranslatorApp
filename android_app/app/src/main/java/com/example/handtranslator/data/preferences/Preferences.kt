@@ -45,4 +45,24 @@ class DataStoreManager(private val context: Context) {
 
     suspend fun setLiveConfidenceThreshold(value: Float) = save(LIVE_CONFIDENCE_THRESHOLD, value)
     fun getLiveConfidenceThreshold(): Flow<Float> = read(LIVE_CONFIDENCE_THRESHOLD, 0.45f)
+
+    private val PHOTO_CONFIDENCE_THRESHOLD = floatPreferencesKey("photo_confidence_threshold_key")
+
+    suspend fun setPhotoConfidenceThreshold(value: Float) = save(PHOTO_CONFIDENCE_THRESHOLD, value)
+    fun getPhotoConfidenceThreshold(): Flow<Float> = read(PHOTO_CONFIDENCE_THRESHOLD, 0.35f)
+
+    private val VIDEO_CONFIDENCE_THRESHOLD = floatPreferencesKey("video_confidence_threshold_key")
+
+    suspend fun setVideoConfidenceThreshold(value: Float) = save(VIDEO_CONFIDENCE_THRESHOLD, value)
+    fun getVideoConfidenceThreshold(): Flow<Float> = read(VIDEO_CONFIDENCE_THRESHOLD, 0.2f)
+
+    private val VIDEO_FRAME_SAMPLE_INTERVAL_MS = longPreferencesKey("video_frame_sample_interval_key")
+
+    suspend fun setVideoFrameSampleInterval(value: Long) = save(VIDEO_FRAME_SAMPLE_INTERVAL_MS, value)
+    fun getVideoFrameSampleInterval(): Flow<Long> = read(VIDEO_FRAME_SAMPLE_INTERVAL_MS, 1500L)
+
+    private val VIDEO_PREVIEW_FILL_ENABLED = intPreferencesKey("video_preview_fill_enabled_key")
+
+    suspend fun setVideoPreviewFillEnabled(value: Boolean) = save(VIDEO_PREVIEW_FILL_ENABLED, if (value) 1 else 0)
+    fun getVideoPreviewFillEnabled(): Flow<Boolean> = read(VIDEO_PREVIEW_FILL_ENABLED, 0).map { it == 1 }
 }
