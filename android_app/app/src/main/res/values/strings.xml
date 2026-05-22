@@ -42,4 +42,9 @@
     <string name="open_test_hint">Swipe left to open ASL test →</string>
     <string name="timer_left">Time: %1$d s</string>
     <string name="answer_timeout">Time is up. Streak reset!</string>
+    <string name="best_series_label">Best series</string>
+    <string name="game_ready_title">Ready to play?</string>
+    <string name="game_ready_subtitle">Press Start to begin a new session</string>
+    <string name="game_start_button">Start game</string>
+    <string name="game_ready_after_reset">Round ended. Press Start to try again</string>
 </resources>

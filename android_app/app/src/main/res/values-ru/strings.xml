@@ -42,4 +42,9 @@
     <string name="open_test_hint">Свайпните влево, чтобы открыть ASL тест →</string>
     <string name="timer_left">Время: %1$d с</string>
     <string name="answer_timeout">Время вышло. Серия сброшена!</string>
+    <string name="best_series_label">Лучшая серия</string>
+    <string name="game_ready_title">Готовы играть?</string>
+    <string name="game_ready_subtitle">Нажмите Старт, чтобы начать новую сессию</string>
+    <string name="game_start_button">Старт</string>
+    <string name="game_ready_after_reset">Раунд завершен. Нажмите Старт, чтобы начать снова</string>
 </resources>

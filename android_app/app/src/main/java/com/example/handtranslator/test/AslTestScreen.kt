@@ -19,14 +19,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -38,13 +40,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -54,13 +56,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.handtranslator.R
 import kotlinx.coroutines.delay
-import kotlin.random.Random
 
 private const val PREFS = "asl_test_prefs"
 private const val BEST_STREAK_KEY = "best_streak"
 private const val ROUND_DURATION = 5L
 
 private data class AslCard(val letter: String, @DrawableRes val drawableRes: Int)
+private enum class GameState { READY, PLAYING }
 private enum class AnswerState { IDLE, CORRECT, WRONG, TIMEOUT }
 
 private val deck = listOf(
@@ -75,28 +77,50 @@ private val deck = listOf(
 fun AslTestScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     var dragOffset by remember { mutableFloatStateOf(0f) }
+    var gameState by rememberSaveable { mutableStateOf(GameState.READY) }
     var currentStreak by rememberSaveable { mutableIntStateOf(0) }
     var bestStreak by remember { mutableIntStateOf(readBestStreak(context)) }
-    var currentCard by remember { mutableStateOf(deck.random()) }
-    var options by remember { mutableStateOf(generateOptions(currentCard.letter)) }
+    var currentCard by remember { mutableStateOf(deck.first()) }
+    var options by remember { mutableStateOf(listOf("A", "B")) }
     var answerState by rememberSaveable { mutableStateOf(AnswerState.IDLE) }
     var statusText by rememberSaveable { mutableStateOf("") }
     var secondsLeft by rememberSaveable { mutableLongStateOf(ROUND_DURATION) }
+    val remainingCards = remember { mutableStateListOf<AslCard>() }
 
-    LaunchedEffect(currentCard.letter) {
+    fun ensureDeck() {
+        if (remainingCards.isEmpty()) {
+            remainingCards.addAll(deck.shuffled())
+        }
+    }
+
+    fun nextRound() {
+        ensureDeck()
+        val next = remainingCards.removeAt(0)
+        currentCard = next
+        options = generateOptions(next.letter)
         secondsLeft = ROUND_DURATION
-        while (secondsLeft > 0) {
+        answerState = AnswerState.IDLE
+    }
+
+    fun resetToReady(message: String) {
+        gameState = GameState.READY
+        currentStreak = 0
+        statusText = message
+        answerState = AnswerState.IDLE
+    }
+
+    LaunchedEffect(gameState, currentCard.letter) {
+        if (gameState != GameState.PLAYING) return@LaunchedEffect
+        secondsLeft = ROUND_DURATION
+        while (secondsLeft > 0 && gameState == GameState.PLAYING && answerState == AnswerState.IDLE) {
             delay(1000)
             secondsLeft -= 1
         }
-        if (answerState == AnswerState.IDLE) {
+        if (gameState == GameState.PLAYING && answerState == AnswerState.IDLE && secondsLeft == 0L) {
             answerState = AnswerState.TIMEOUT
-            currentStreak = 0
             statusText = context.getString(R.string.answer_timeout)
-            delay(900)
-            currentCard = deck.random()
-            options = generateOptions(currentCard.letter)
-            answerState = AnswerState.IDLE
+            delay(800)
+            resetToReady(context.getString(R.string.game_ready_after_reset))
         }
     }
 
@@ -109,44 +133,65 @@ fun AslTestScreen(onBack: () -> Unit) {
     )
 
     Surface(
-        modifier = Modifier.fillMaxSize().padding(12.dp).clip(RoundedCornerShape(24.dp)).pointerInput(Unit) {
-            detectHorizontalDragGestures(
-                onHorizontalDrag = { _, amount -> dragOffset += amount },
-                onDragEnd = { if (dragOffset > 160f) onBack(); dragOffset = 0f },
-                onDragCancel = { dragOffset = 0f }
-            )
-        }, color = MaterialTheme.colorScheme.background
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(12.dp)
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onHorizontalDrag = { _, amount -> dragOffset += amount },
+                    onDragEnd = { if (dragOffset > 160f) onBack(); dragOffset = 0f },
+                    onDragCancel = { dragOffset = 0f }
+                )
+            },
+        color = MaterialTheme.colorScheme.background
     ) {
-        Column(modifier = Modifier.fillMaxSize().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                 IconButton(onClick = onBack) {
-                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back_to_main))
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back_to_main))
                 }
                 Text(stringResource(R.string.test_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
                 Text("⟵", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.secondary)
             }
 
-            ScorePill(stringResource(R.string.streak_best, bestStreak), Color(0xFF6A1B9A))
-            ScorePill(stringResource(R.string.streak_current, currentStreak), Color(0xFF1565C0))
-
+            AppStyledBestScore(bestStreak = bestStreak)
+            ScorePill(stringResource(R.string.streak_current, currentStreak), MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
             TimerBar(secondsLeft = secondsLeft)
 
-            Image(painter = painterResource(currentCard.drawableRes), contentDescription = stringResource(R.string.test_gesture_image), modifier = Modifier.size(210.dp))
+            if (gameState == GameState.READY) {
+                Surface(shape = RoundedCornerShape(20.dp), tonalElevation = 5.dp, modifier = Modifier.fillMaxWidth(0.9f)) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(18.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(stringResource(R.string.game_ready_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text(statusText.ifBlank { stringResource(R.string.game_ready_subtitle) }, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.secondary)
+                        Button(onClick = {
+                            statusText = ""
+                            gameState = GameState.PLAYING
+                            nextRound()
+                        }) { Text(stringResource(R.string.game_start_button)) }
+                    }
+                }
+            } else {
+                Image(painter = painterResource(currentCard.drawableRes), contentDescription = stringResource(R.string.test_gesture_image), modifier = Modifier.size(210.dp))
 
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                options.forEachIndexed { idx, letter ->
-                    AnimatedOptionChip(letter = letter, delayMs = idx * 120L) {
-                        val isCorrect = letter == currentCard.letter
-                        answerState = if (isCorrect) AnswerState.CORRECT else AnswerState.WRONG
-                        statusText = if (isCorrect) context.getString(R.string.answer_correct) else context.getString(R.string.answer_incorrect, currentCard.letter)
-                        if (isCorrect) {
-                            currentStreak += 1
-                            if (currentStreak > bestStreak) {
-                                bestStreak = currentStreak
-                                saveBestStreak(context, bestStreak)
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    options.forEach { letter ->
+                        AnimatedOptionChip(letter = letter, secondsLeft = secondsLeft) {
+                            val isCorrect = letter == currentCard.letter
+                            answerState = if (isCorrect) AnswerState.CORRECT else AnswerState.WRONG
+                            statusText = if (isCorrect) context.getString(R.string.answer_correct) else context.getString(R.string.answer_incorrect, currentCard.letter)
+                            if (isCorrect) {
+                                currentStreak += 1
+                                if (currentStreak > bestStreak) {
+                                    bestStreak = currentStreak
+                                    saveBestStreak(context, bestStreak)
+                                }
+                            } else {
+                                currentStreak = 0
                             }
-                        } else {
-                            currentStreak = 0
                         }
                     }
                 }
@@ -157,19 +202,36 @@ fun AslTestScreen(onBack: () -> Unit) {
     }
 
     LaunchedEffect(answerState) {
-        if (answerState == AnswerState.CORRECT || answerState == AnswerState.WRONG) {
-            delay(850)
-            currentCard = deck.random()
-            options = generateOptions(currentCard.letter)
-            answerState = AnswerState.IDLE
+        if (gameState != GameState.PLAYING) return@LaunchedEffect
+        if (answerState == AnswerState.CORRECT) {
+            delay(650)
+            nextRound()
+        } else if (answerState == AnswerState.WRONG) {
+            delay(700)
+            resetToReady(context.getString(R.string.game_ready_after_reset))
         }
     }
 }
 
 @Composable
-private fun ScorePill(text: String, accent: Color) {
-    Surface(shape = RoundedCornerShape(18.dp), tonalElevation = 5.dp, modifier = Modifier.fillMaxWidth(0.9f)) {
-        Text(text = text, modifier = Modifier.fillMaxWidth().background(accent.copy(alpha = 0.12f)).padding(vertical = 10.dp, horizontal = 14.dp), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = accent)
+private fun AppStyledBestScore(bestStreak: Int) {
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        tonalElevation = 6.dp,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        modifier = Modifier.fillMaxWidth(0.9f)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(stringResource(R.string.best_series_label), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+            Text(bestStreak.toString(), style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.ExtraBold)
+        }
+    }
+}
+
+@Composable
+private fun ScorePill(text: String, background: Color, content: Color) {
+    Surface(shape = RoundedCornerShape(16.dp), tonalElevation = 3.dp, modifier = Modifier.fillMaxWidth(0.9f), color = background) {
+        Text(text = text, modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp, horizontal = 14.dp), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = content)
     }
 }
 
@@ -179,17 +241,31 @@ private fun TimerBar(secondsLeft: Long) {
     val color = if (secondsLeft <= 1) Color(0xFFD32F2F) else Color(0xFF00897B)
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(stringResource(R.string.timer_left, secondsLeft), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = color)
-        Box(modifier = Modifier.width(240.dp).clip(RoundedCornerShape(14.dp)).background(Color.LightGray.copy(alpha = 0.35f)).padding(2.dp)) {
-            Box(modifier = Modifier.fillMaxWidth(progress) .height(10.dp).clip(RoundedCornerShape(14.dp)).background(color))
+        Box(modifier = Modifier.width(240.dp).background(Color.LightGray.copy(alpha = 0.35f), RoundedCornerShape(14.dp)).padding(2.dp)) {
+            Box(modifier = Modifier.fillMaxWidth(progress).height(10.dp).background(color, RoundedCornerShape(14.dp)))
         }
     }
 }
 
 @Composable
-private fun AnimatedOptionChip(letter: String, delayMs: Long, onPick: () -> Unit) {
+private fun AnimatedOptionChip(letter: String, secondsLeft: Long, onPick: () -> Unit) {
+    val intensity = (ROUND_DURATION - secondsLeft).coerceAtLeast(0)
+    val amplitude = 2f + intensity * 1.2f
+    val duration = (560L - intensity * 75L).coerceAtLeast(170L).toInt()
     val transition = rememberInfiniteTransition(label = "opt")
-    val angle by transition.animateFloat(-3f, 3f, animationSpec = infiniteRepeatable(tween(550, delayMillis = delayMs.toInt(), easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "a")
-    Surface(onClick = onPick, shape = CircleShape, tonalElevation = 7.dp, modifier = Modifier.rotate(angle).border(1.dp, MaterialTheme.colorScheme.primary, CircleShape)) {
+    val angle by transition.animateFloat(
+        -amplitude,
+        amplitude,
+        animationSpec = infiniteRepeatable(animation = tween(duration, easing = FastOutSlowInEasing), repeatMode = RepeatMode.Reverse),
+        label = "a"
+    )
+    Surface(
+        onClick = onPick,
+        shape = CircleShape,
+        tonalElevation = 7.dp,
+        color = MaterialTheme.colorScheme.surface,
+        modifier = Modifier.rotate(angle).border(1.dp, MaterialTheme.colorScheme.primary, CircleShape)
+    ) {
         Box(modifier = Modifier.size(72.dp), contentAlignment = Alignment.Center) {
             Text(letter, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary)
         }
@@ -197,9 +273,9 @@ private fun AnimatedOptionChip(letter: String, delayMs: Long, onPick: () -> Unit
 }
 
 private fun generateOptions(correctLetter: String): List<String> {
-    val wrongLetter = deck.map { it.letter }.filter { it != correctLetter }.random(Random)
-    return listOf(correctLetter, wrongLetter).shuffled(Random)
+    val wrongLetter = deck.map { it.letter }.filter { it != correctLetter }.random()
+    return listOf(correctLetter, wrongLetter).shuffled()
 }
 
 private fun readBestStreak(context: Context): Int = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getInt(BEST_STREAK_KEY, 0)
-private fun saveBestStreak(context: Context, value: Int) { context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt(BEST_STREAK_KEY, value).apply() }
+private fun saveBestStreak(context: Context, value: Int) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt(BEST_STREAK_KEY, value).apply()
