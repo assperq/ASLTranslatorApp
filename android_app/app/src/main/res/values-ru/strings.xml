@@ -28,6 +28,7 @@
     <string name="settings_subtitle">Параметры распознавания</string>
     <string name="back_to_main">Назад на главный экран</string>
     <string name="settings_prediction_cooldown">Задержка предсказания</string>
+    <string name="settings_live_section">Распознавание в реальном времени</string>
     <string name="settings_required_matches">Требуемые совпадения</string>
     <string name="settings_frame_interval">Интервал анализа кадров</string>
     <string name="settings_confidence_threshold">Порог уверенности</string>
