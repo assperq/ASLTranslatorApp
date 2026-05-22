@@ -49,6 +49,13 @@
     <string name="settings_video_confidence_threshold_desc">Дополнительный более низкий порог для кадров видео. Помогает распознать сложные кадры, когда основной порог слишком строгий.</string>
     <string name="settings_video_frame_interval_desc">Шаг между анализируемыми кадрами видео. Меньше шаг — точнее покрытие, больше шаг — быстрее обработка.</string>
     <string name="settings_video_resize_mode_desc">Как показывать видео в предпросмотре. «Вписать» показывает весь кадр с полями, «Заполнить» обрезает края без пустот.</string>
+    <string name="settings_single_frame_timeout">Таймаут распознавания 1 кадра</string>
+    <string name="settings_single_frame_timeout_desc">Максимальное время ожидания распознавания кадра на паузе. Если время вышло, приложение покажет диалог неудачного распознавания.</string>
+    <string name="recognize_current_frame">Распознать текущий кадр</string>
+    <string name="single_frame_loading_title">Распознаем кадр…</string>
+    <string name="single_frame_failed_title">Не удалось распознать кадр</string>
+    <string name="single_frame_failed_message">В текущем кадре не найдено надежной буквы. Попробуйте поставить видео на паузу в другом месте.</string>
+    <string name="single_frame_result_title">Результат распознавания кадра</string>
     <string name="settings_ms_value">%1$d мс</string>
     <string name="settings_percent_value">%1$d%%</string>
     <string name="test_title">ASL тест</string>

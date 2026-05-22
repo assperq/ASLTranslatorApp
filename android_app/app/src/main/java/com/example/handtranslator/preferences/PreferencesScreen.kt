@@ -42,6 +42,7 @@ fun PreferencesScreen(
     videoConfidenceThreshold: Float,
     videoFrameSampleIntervalMs: Long,
     videoPreviewFillEnabled: Boolean,
+    singleFrameRecognitionTimeoutMs: Long,
     onPredictionCooldownChange: (Long) -> Unit,
     onRequiredMatchesChange: (Int) -> Unit,
     onFrameSampleIntervalMsChange: (Long) -> Unit,
@@ -50,6 +51,7 @@ fun PreferencesScreen(
     onVideoConfidenceThresholdChange: (Float) -> Unit,
     onVideoFrameSampleIntervalMsChange: (Long) -> Unit,
     onVideoPreviewFillEnabledChange: (Boolean) -> Unit,
+    onSingleFrameRecognitionTimeoutMsChange: (Long) -> Unit,
     onBackClick: () -> Unit,
 ) {
     Surface(
@@ -147,6 +149,16 @@ fun PreferencesScreen(
                 onCheckedChange = onVideoPreviewFillEnabledChange,
                 descriptionTitle = stringResource(R.string.settings_video_resize_mode),
                 descriptionText = stringResource(R.string.settings_video_resize_mode_desc)
+            )
+            SettingsSliderCard(
+                title = stringResource(R.string.settings_single_frame_timeout),
+                value = stringResource(R.string.settings_ms_value, singleFrameRecognitionTimeoutMs),
+                sliderValue = singleFrameRecognitionTimeoutMs.toFloat(),
+                valueRange = 500f..8000f,
+                steps = 14,
+                onValueChange = { onSingleFrameRecognitionTimeoutMsChange(it.toLong()) },
+                descriptionTitle = stringResource(R.string.settings_single_frame_timeout),
+                descriptionText = stringResource(R.string.settings_single_frame_timeout_desc)
             )
         }
     }

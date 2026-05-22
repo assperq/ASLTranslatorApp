@@ -49,6 +49,13 @@
     <string name="settings_video_confidence_threshold_desc">Extra lower threshold used as fallback for video frames. Helps catch hard frames when main threshold is too strict.</string>
     <string name="settings_video_frame_interval_desc">Step between analyzed video frames. Smaller step = better coverage, bigger step = faster processing.</string>
     <string name="settings_video_resize_mode_desc">How video is shown in preview. Fit shows full frame with borders; Fill crops edges but removes empty space.</string>
+    <string name="settings_single_frame_timeout">Single frame recognition timeout</string>
+    <string name="settings_single_frame_timeout_desc">Maximum wait time for paused-frame recognition. If exceeded, app shows a failed recognition dialog.</string>
+    <string name="recognize_current_frame">Recognize current frame</string>
+    <string name="single_frame_loading_title">Recognizing frame…</string>
+    <string name="single_frame_failed_title">Couldn’t recognize frame</string>
+    <string name="single_frame_failed_message">No reliable letter found in the current frame. Try another pause moment.</string>
+    <string name="single_frame_result_title">Frame recognition result</string>
     <string name="settings_ms_value">%1$d ms</string>
     <string name="settings_percent_value">%1$d%%</string>
     <string name="test_title">ASL test</string>

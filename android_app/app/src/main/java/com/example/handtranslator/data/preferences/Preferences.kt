@@ -65,4 +65,9 @@ class DataStoreManager(private val context: Context) {
 
     suspend fun setVideoPreviewFillEnabled(value: Boolean) = save(VIDEO_PREVIEW_FILL_ENABLED, if (value) 1 else 0)
     fun getVideoPreviewFillEnabled(): Flow<Boolean> = read(VIDEO_PREVIEW_FILL_ENABLED, 0).map { it == 1 }
+
+    private val SINGLE_FRAME_RECOGNITION_TIMEOUT_MS = longPreferencesKey("single_frame_recognition_timeout_ms_key")
+
+    suspend fun setSingleFrameRecognitionTimeoutMs(value: Long) = save(SINGLE_FRAME_RECOGNITION_TIMEOUT_MS, value)
+    fun getSingleFrameRecognitionTimeoutMs(): Flow<Long> = read(SINGLE_FRAME_RECOGNITION_TIMEOUT_MS, 2500L)
 }

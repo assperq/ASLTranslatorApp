@@ -19,8 +19,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material3.Button
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -51,7 +53,9 @@ fun MediaPanel(
     selectedMediaUri: Uri?,
     selectedMediaType: SelectedMediaType,
     videoPreviewFillEnabled: Boolean,
-    singleFrameRecognitionResult: String?,
+    singleFrameRecognitionResult: Letter?,
+    isSingleFrameRecognizing: Boolean,
+    singleFrameRecognitionFailed: Boolean,
     onSelectMedia: (Uri) -> Unit,
     onSwitchToCameraPreview: () -> Unit,
     onRecognizeCurrentVideoFrame: (Uri, Long) -> Unit,
@@ -112,13 +116,33 @@ fun MediaPanel(
             }
         }
 
+        if (isSingleFrameRecognizing) {
+            AlertDialog(
+                onDismissRequest = onDismissSingleFrameRecognition,
+                title = { Text(stringResource(R.string.single_frame_loading_title)) },
+                text = { CircularProgressIndicator() },
+                confirmButton = {
+                    TextButton(onClick = onDismissSingleFrameRecognition) { Text(stringResource(R.string.settings_dialog_close)) }
+                }
+            )
+        }
+        if (singleFrameRecognitionFailed) {
+            AlertDialog(
+                onDismissRequest = onDismissSingleFrameRecognition,
+                title = { Text(stringResource(R.string.single_frame_failed_title)) },
+                text = { Text(stringResource(R.string.single_frame_failed_message)) },
+                confirmButton = {
+                    TextButton(onClick = onDismissSingleFrameRecognition) { Text(stringResource(R.string.settings_dialog_close)) }
+                }
+            )
+        }
         if (singleFrameRecognitionResult != null) {
             AlertDialog(
                 onDismissRequest = onDismissSingleFrameRecognition,
-                title = { Text("Распознанный кадр") },
-                text = { Text("Результат: $singleFrameRecognitionResult") },
+                title = { Text(stringResource(R.string.single_frame_result_title)) },
+                text = { LetterCard(letter = singleFrameRecognitionResult, compact = false) },
                 confirmButton = {
-                    TextButton(onClick = onDismissSingleFrameRecognition) { Text("ОК") }
+                    TextButton(onClick = onDismissSingleFrameRecognition) { Text(stringResource(R.string.settings_dialog_close)) }
                 }
             )
         }
@@ -195,15 +219,16 @@ private fun SelectedVideoPreview(
         )
 
         if (!isPlaying) {
-            Button(
+            IconButton(
                 onClick = {
                     onRecognizeCurrentVideoFrame(uri, player.currentPosition)
                 },
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 24.dp)
+                    .align(Alignment.TopEnd)
+                    .padding(12.dp)
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.85f), CircleShape)
             ) {
-                Text("Распознать кадр")
+                Icon(Icons.Outlined.AutoAwesome, contentDescription = stringResource(R.string.recognize_current_frame))
             }
         }
     }

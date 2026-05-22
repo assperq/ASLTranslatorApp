@@ -37,6 +37,7 @@ fun SetupNavigation(
     translatorViewModel: TranslatorViewModel = koinViewModel(),
 ) {
     val videoPreviewFillEnabled by translatorViewModel.videoPreviewFillEnabled.collectAsState()
+    val singleFrameRecognitionTimeoutMs by translatorViewModel.singleFrameRecognitionTimeoutMs.collectAsState()
 
     NavHost(navHostController,
         Routes.MainScreen.route,
@@ -101,6 +102,8 @@ fun SetupNavigation(
                         selectedMediaType = translatorViewModel.selectedMediaType,
                         videoPreviewFillEnabled = videoPreviewFillEnabled,
                         singleFrameRecognitionResult = translatorViewModel.singleFrameRecognitionResult,
+                        isSingleFrameRecognizing = translatorViewModel.isSingleFrameRecognizing,
+                        singleFrameRecognitionFailed = translatorViewModel.singleFrameRecognitionFailed,
                         onSelectMedia = translatorViewModel::onSelectMedia,
                         onSwitchToCameraPreview = {
                             translatorViewModel.onSwitchToCameraPreview(lifecycleOwner, hasCameraPermission)
@@ -137,6 +140,7 @@ fun SetupNavigation(
                         videoConfidenceThreshold = videoConfidenceThreshold,
                         videoFrameSampleIntervalMs = videoFrameSampleIntervalMs,
                         videoPreviewFillEnabled = videoPreviewFillEnabled,
+                        singleFrameRecognitionTimeoutMs = singleFrameRecognitionTimeoutMs,
                         onPredictionCooldownChange = translatorViewModel::setPredictionCooldown,
                         onRequiredMatchesChange = translatorViewModel::setRequiredMatches,
                         onFrameSampleIntervalMsChange = translatorViewModel::setFrameSampleIntervalMs,
@@ -145,6 +149,7 @@ fun SetupNavigation(
                         onVideoConfidenceThresholdChange = translatorViewModel::setVideoConfidenceThreshold,
                         onVideoFrameSampleIntervalMsChange = translatorViewModel::setVideoFrameSampleIntervalMs,
                         onVideoPreviewFillEnabledChange = translatorViewModel::setVideoPreviewFillEnabled,
+                        onSingleFrameRecognitionTimeoutMsChange = translatorViewModel::setSingleFrameRecognitionTimeoutMs,
                         onBackClick = {
                             navHostController.popBackStack()
                         }
