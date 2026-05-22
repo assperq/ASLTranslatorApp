@@ -24,6 +24,7 @@ import com.example.handtranslator.preferences.PreferencesScreen
 import com.example.handtranslator.translator.InputMode
 import com.example.handtranslator.translator.MainScreen
 import com.example.handtranslator.translator.TranslatorViewModel
+import com.example.handtranslator.test.AslTestScreen
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -102,6 +103,9 @@ fun SetupNavigation(
                         },
                         onOpenSettings = {
                             navHostController.navigate(Routes.Preferences.route)
+                        },
+                        onOpenTest = {
+                            navHostController.navigate(Routes.Test.route)
                         }
                     )
                 }
@@ -132,5 +136,14 @@ fun SetupNavigation(
                 }
             }
         }
+
+        composable(Routes.Test.route) {
+            Scaffold { innerPadding ->
+                Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+                    AslTestScreen(onBack = { navHostController.popBackStack() })
+                }
+            }
+        }
+
     }
 }
