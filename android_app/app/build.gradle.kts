@@ -36,9 +36,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        //jvmTarget = "11"
-    }
     buildFeatures {
         compose = true
         mlModelBinding = true
@@ -103,8 +100,4 @@ dependencies {
 
     implementation(libs.kotlinx.serialization.json)
 
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
-    debugImplementation("androidx.compose.ui:ui-test-manifest")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
 }
