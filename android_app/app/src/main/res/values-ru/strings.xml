@@ -39,4 +39,7 @@
     <string name="streak_best">Лучшая серия: %1$d</string>
     <string name="answer_correct">Верно!</string>
     <string name="answer_incorrect">Неверно. Правильная буква: %1$s</string>
+    <string name="open_test_hint">Свайпните влево, чтобы открыть ASL тест →</string>
+    <string name="timer_left">Время: %1$d с</string>
+    <string name="answer_timeout">Время вышло. Серия сброшена!</string>
 </resources>

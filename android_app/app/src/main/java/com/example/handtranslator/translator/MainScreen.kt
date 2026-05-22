@@ -83,6 +83,12 @@ fun MainScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             HeaderBar(onOpenSettings = onOpenSettings)
+            Text(
+                text = stringResource(R.string.open_test_hint),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.SemiBold
+            )
             InputModeSelector(inputMode = inputMode, onInputModeChange = onInputModeChange)
 
             MainContent(

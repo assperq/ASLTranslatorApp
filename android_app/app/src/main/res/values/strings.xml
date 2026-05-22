@@ -39,4 +39,7 @@
     <string name="streak_best">Best streak: %1$d</string>
     <string name="answer_correct">Correct!</string>
     <string name="answer_incorrect">Incorrect. Correct letter: %1$s</string>
+    <string name="open_test_hint">Swipe left to open ASL test →</string>
+    <string name="timer_left">Time: %1$d s</string>
+    <string name="answer_timeout">Time is up. Streak reset!</string>
 </resources>
