@@ -39,6 +39,16 @@
     <string name="settings_video_resize_mode">Режим отображения видео</string>
     <string name="settings_video_fit">Вписать в рамку</string>
     <string name="settings_video_fill">Заполнить рамку (обрезка)</string>
+    <string name="settings_info_icon_desc">Показать пояснение к настройке</string>
+    <string name="settings_dialog_close">Понятно</string>
+    <string name="settings_prediction_cooldown_desc">Пауза перед добавлением новой распознанной буквы. Больше значение — меньше случайных повторов.</string>
+    <string name="settings_required_matches_desc">Сколько одинаковых предсказаний подряд нужно для принятия буквы. Больше значение — стабильнее, но медленнее.</string>
+    <string name="settings_frame_interval_desc">Как часто анализируются кадры с камеры в Live. Меньше значение — быстрее реакция, но выше нагрузка.</string>
+    <string name="settings_confidence_threshold_desc">Минимальная уверенность для Live-предсказания. Больше значение — строже и чище результат, но часть букв может пропускаться.</string>
+    <string name="settings_photo_confidence_threshold_desc">Основной порог уверенности для распознавания фото. Повышайте, если часто появляются неверные буквы.</string>
+    <string name="settings_video_confidence_threshold_desc">Дополнительный более низкий порог для кадров видео. Помогает распознать сложные кадры, когда основной порог слишком строгий.</string>
+    <string name="settings_video_frame_interval_desc">Шаг между анализируемыми кадрами видео. Меньше шаг — точнее покрытие, больше шаг — быстрее обработка.</string>
+    <string name="settings_video_resize_mode_desc">Как показывать видео в предпросмотре. «Вписать» показывает весь кадр с полями, «Заполнить» обрезает края без пустот.</string>
     <string name="settings_ms_value">%1$d мс</string>
     <string name="settings_percent_value">%1$d%%</string>
     <string name="test_title">ASL тест</string>
