@@ -298,7 +298,7 @@ fun MainContent(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 220.dp, max = 320.dp),
+                    .heightIn(min = 220.dp, max = 280.dp),
                 tonalElevation = 4.dp,
                 shape = RoundedCornerShape(20.dp),
                 color = MaterialTheme.colorScheme.surface

@@ -23,6 +23,7 @@ koinTest = "4.1.1"
 navigationCompose = "2.9.7"
 
 media3ExoplayerDash = "1.9.3"
+coreSplashscreen = "1.0.1"
 
 [libraries]
 androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "cameraCore" }
@@ -67,6 +68,9 @@ androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", versi
 androidx-media3-exoplayer-dash = { module = "androidx.media3:media3-exoplayer-dash", version.ref = "media3ExoplayerDash" }
 androidx-media3-ui-compose = { module = "androidx.media3:media3-ui-compose", version.ref = "media3ExoplayerDash" }
 androidx-media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3ExoplayerDash" }
+
+androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
+
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
