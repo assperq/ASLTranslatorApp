@@ -51,7 +51,7 @@ def test_create_landmarks_csv():
             FakeHands()
         )
 
-        csv_path = Path('asl_landmarks_dataset_210.csv')
+        csv_path = Path('asl_landmarks_dataset_210_test.csv')
 
         assert csv_path.exists()
 

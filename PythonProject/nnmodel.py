@@ -29,7 +29,7 @@ def _safe_split(
     """Надежное разбиение на train/val/test даже для маленьких датасетов."""
     n_samples = len(X)
     if n_samples < 2:
-        print('⚠️ Слишком мало данных для разбиения: используем весь датасет как train/val/test')
+        print('⚠Слишком мало данных для разбиения: используем весь датасет как train/val/test')
         return X, X, X, y, y, y
 
     _, counts = np.unique(y, return_counts=True)
@@ -50,7 +50,7 @@ def _safe_split(
     )
 
     if len(X_train_val) < 2:
-        print('⚠️ Недостаточно данных для отдельной валидации: val совпадает с train')
+        print('Недостаточно данных для отдельной валидации: val совпадает с train')
         return X_train_val, X_train_val, X_test, y_train_val, y_train_val, y_test
 
     val_size = max(1, int(round(len(X_train_val) * 0.125)))
