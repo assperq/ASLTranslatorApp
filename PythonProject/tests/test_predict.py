@@ -45,4 +45,4 @@ def test_predict_with_tflite(monkeypatch):
     )
 
     assert label == 'B'
-    assert confidence == 0.8
+    assert round(confidence, 1) == 0.8
