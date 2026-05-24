@@ -2,6 +2,7 @@ from pathlib import Path
 
 import cv2
 
+from getLandmarks import createLandMarksFromPath
 from modelLearn import create_mediapipe_hands
 from nnmodel import (
     create_and_train_nn,
@@ -31,6 +32,7 @@ def test_model(hands, test_image_path: str = 'test.jpg') -> None:
 
 def main() -> None:
     hands = create_mediapipe_hands()
+    createLandMarksFromPath(r'C:\Users\SystemX\programming\Diplom\DATA', hands)
     try:
         create_and_train_nn(
             csv_path='asl_landmarks_dataset_210.csv',

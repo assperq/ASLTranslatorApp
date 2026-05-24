@@ -21,6 +21,56 @@ def _build_model(input_dim: int, num_classes: int, normalization: tf.keras.layer
     return model
 
 
+def _safe_split(
+    X: np.ndarray,
+    y: np.ndarray,
+    random_state: int,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Надежное разбиение на train/val/test даже для маленьких датасетов."""
+    n_samples = len(X)
+    if n_samples < 2:
+        print('⚠️ Слишком мало данных для разбиения: используем весь датасет как train/val/test')
+        return X, X, X, y, y, y
+
+    _, counts = np.unique(y, return_counts=True)
+    min_class_count = int(counts.min()) if len(counts) else 0
+    use_stratify = min_class_count >= 2
+    stratify_target = y if use_stratify else None
+
+    test_size = max(1, int(round(n_samples * 0.2)))
+    if n_samples - test_size < 1:
+        test_size = n_samples - 1
+
+    X_train_val, X_test, y_train_val, y_test = train_test_split(
+        X,
+        y,
+        test_size=test_size,
+        random_state=random_state,
+        stratify=stratify_target,
+    )
+
+    if len(X_train_val) < 2:
+        print('⚠️ Недостаточно данных для отдельной валидации: val совпадает с train')
+        return X_train_val, X_train_val, X_test, y_train_val, y_train_val, y_test
+
+    val_size = max(1, int(round(len(X_train_val) * 0.125)))
+    if len(X_train_val) - val_size < 1:
+        val_size = len(X_train_val) - 1
+
+    _, counts_tv = np.unique(y_train_val, return_counts=True)
+    min_tv_count = int(counts_tv.min()) if len(counts_tv) else 0
+    stratify_tv = y_train_val if min_tv_count >= 2 else None
+
+    X_train, X_val, y_train, y_val = train_test_split(
+        X_train_val,
+        y_train_val,
+        test_size=val_size,
+        random_state=random_state,
+        stratify=stratify_tv,
+    )
+    return X_train, X_val, X_test, y_train, y_val, y_test
+
+
 def create_and_train_nn(
     csv_path: str,
     model_save_path: str = 'asl_model.keras',
@@ -43,19 +93,10 @@ def create_and_train_nn(
     print(f"Количество классов: {num_classes}")
     print(f"Классы: {label_encoder.classes_}")
 
-    X_train_val, X_test, y_train_val, y_test = train_test_split(
-        X,
-        y_encoded,
-        test_size=0.2,
+    X_train, X_val, X_test, y_train, y_val, y_test = _safe_split(
+        X=X,
+        y=y_encoded,
         random_state=random_state,
-        stratify=y_encoded,
-    )
-    X_train, X_val, y_train, y_val = train_test_split(
-        X_train_val,
-        y_train_val,
-        test_size=0.125,
-        random_state=random_state,
-        stratify=y_train_val,
     )
     print(f"Размеры выборок: train={len(X_train)}, val={len(X_val)}, test={len(X_test)}")
 
@@ -171,3 +212,4 @@ def predict_with_tflite(
     confidence = float(probabilities[predicted_class_idx])
     predicted_label = label_encoder.inverse_transform([predicted_class_idx])[0]
     return predicted_label, confidence
+
