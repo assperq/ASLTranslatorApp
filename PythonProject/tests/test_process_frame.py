@@ -1,56 +1,49 @@
 import numpy as np
-from types import SimpleNamespace
 
 from nnmodel import process_frame_for_tflite
 
 
-class FakeLandmark:
+class LM:
     def __init__(self, x, y, z):
         self.x = x
         self.y = y
         self.z = z
 
 
-class FakeHandLandmarks:
+class HandLandmarks:
     def __init__(self, landmarks):
         self.landmark = landmarks
 
 
-class FakeResults:
-    def __init__(self, landmarks):
-        self.multi_hand_landmarks = landmarks
+class Results:
+    def __init__(self, multi_hand_landmarks):
+        self.multi_hand_landmarks = multi_hand_landmarks
 
 
-class FakeMediaPipeHands:
-    def process(self, frame):
-        landmarks = [
-            FakeLandmark(i * 0.1, i * 0.1, i * 0.1)
-            for i in range(21)
-        ]
+class FakeHands:
+    def __init__(self, results):
+        self._results = results
 
-        return FakeResults([
-            FakeHandLandmarks(landmarks)
-        ])
+    def process(self, _img_rgb):
+        return self._results
 
 
-def test_process_frame_returns_210_features():
-    frame = np.zeros((480, 640, 3), dtype=np.uint8)
+def test_process_frame_returns_210_features_when_hand_present():
+    landmarks = [LM(float(i), float(i + 1), float(i + 2)) for i in range(21)]
+    results = Results([HandLandmarks(landmarks)])
+    hands = FakeHands(results)
+    frame = np.zeros((32, 32, 3), dtype=np.uint8)
 
-    result = process_frame_for_tflite(
-        frame,
-        FakeMediaPipeHands()
-    )
+    out = process_frame_for_tflite(frame, hands)
 
-    assert result is not None
-    assert result.shape == (1, 210)
+    assert out is not None
+    assert out.shape == (1, 210)
 
 
-def test_process_frame_returns_float32():
-    frame = np.zeros((480, 640, 3), dtype=np.uint8)
+def test_process_frame_returns_none_when_no_hand():
+    hands = FakeHands(Results(None))
+    frame = np.zeros((32, 32, 3), dtype=np.uint8)
 
-    result = process_frame_for_tflite(
-        frame,
-        FakeMediaPipeHands()
-    )
+    out = process_frame_for_tflite(frame, hands)
 
-    assert result.dtype == np.float32
+    assert out is None
