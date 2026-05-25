@@ -70,40 +70,40 @@ fun SetupNavigation(
             Scaffold { innerPadding ->
                 Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
                     MainScreen(
-                        inputMode = translatorViewModel.inputMode,
+                        inputMode = translatorViewModel.uiState.inputMode,
                         onInputModeChange = {
                             translatorViewModel.onInputModeChange(it, lifecycleOwner , hasCameraPermission)
                             if (it == InputMode.CAMERA && !hasCameraPermission) {
                                 ensureCameraPermission()
                             }
                         },
-                        showLandmarks = translatorViewModel.showLandmarks,
+                        showLandmarks = translatorViewModel.uiState.showLandmarks,
                         onShowLandmarksChange = translatorViewModel::onShowLandmarksChange,
-                        cameraFacing = translatorViewModel.cameraFacing,
+                        cameraFacing = translatorViewModel.uiState.cameraFacing,
                         onCameraFacingChange = {
                             translatorViewModel.onCameraFacingChange(it, lifecycleOwner)
                         },
-                        recognizedText = translatorViewModel.recognizedText,
-                        textInput = translatorViewModel.textInput,
+                        recognizedText = translatorViewModel.uiState.recognizedText,
+                        textInput = translatorViewModel.uiState.textInput,
                         onTextInputChange = translatorViewModel::onTextInputChange,
-                        landmarks = translatorViewModel.landmarks,
-                        onPreviewViewReady = { view ->
-                            translatorViewModel.onPreviewViewReady(view, lifecycleOwner, hasCameraPermission)
+                        landmarks = translatorViewModel.uiState.landmarks,
+                        onPreviewSurfaceReady = { surfaceProvider ->
+                            translatorViewModel.onCameraSurfaceReady(surfaceProvider, lifecycleOwner, hasCameraPermission)
                             if (!hasCameraPermission) {
                                 ensureCameraPermission()
                             }
                         },
                         onTorchEnabledChange = translatorViewModel::onTorchEnabledChange,
-                        isTorchEnabled = translatorViewModel.isTorchEnabled,
-                        isTorchSupported = translatorViewModel.isTorchSupported,
+                        isTorchEnabled = translatorViewModel.uiState.isTorchEnabled,
+                        isTorchSupported = translatorViewModel.uiState.isTorchSupported,
                         onClearRecognizedText = translatorViewModel::onClearRecognizedText,
-                        cameraContentMode = translatorViewModel.cameraContentMode,
-                        selectedMediaUri = translatorViewModel.selectedMediaUri,
-                        selectedMediaType = translatorViewModel.selectedMediaType,
+                        cameraContentMode = translatorViewModel.uiState.cameraContentMode,
+                        selectedMediaUri = translatorViewModel.uiState.selectedMediaUri,
+                        selectedMediaType = translatorViewModel.uiState.selectedMediaType,
                         videoPreviewFillEnabled = videoPreviewFillEnabled,
-                        singleFrameRecognitionResult = translatorViewModel.singleFrameRecognitionResult,
-                        isSingleFrameRecognizing = translatorViewModel.isSingleFrameRecognizing,
-                        singleFrameRecognitionFailed = translatorViewModel.singleFrameRecognitionFailed,
+                        singleFrameRecognitionResult = translatorViewModel.uiState.singleFrameRecognitionResult,
+                        isSingleFrameRecognizing = translatorViewModel.uiState.isSingleFrameRecognizing,
+                        singleFrameRecognitionFailed = translatorViewModel.uiState.singleFrameRecognitionFailed,
                         onSelectMedia = translatorViewModel::onSelectMedia,
                         onSwitchToCameraPreview = {
                             translatorViewModel.onSwitchToCameraPreview(lifecycleOwner, hasCameraPermission)
