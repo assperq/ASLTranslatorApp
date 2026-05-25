@@ -2,7 +2,7 @@ package com.example.handtranslator.translator
 
 import android.content.res.Configuration
 import android.net.Uri
-import androidx.camera.view.PreviewView
+import androidx.camera.core.Preview
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -52,7 +52,7 @@ fun MainScreen(
     textInput: String,
     onTextInputChange: (String) -> Unit,
     landmarks: List<NormalizedLandmark>,
-    onPreviewViewReady: (PreviewView) -> Unit,
+    onPreviewSurfaceReady: (Preview.SurfaceProvider) -> Unit,
     onClearRecognizedText: (Boolean) -> Unit,
     onSelectMedia: (Uri) -> Unit,
     onSwitchToCameraPreview: () -> Unit,
@@ -117,7 +117,7 @@ fun MainScreen(
                 textInput = textInput,
                 onTextInputChange = onTextInputChange,
                 landmarks = landmarks,
-                onPreviewViewReady = onPreviewViewReady,
+                onPreviewSurfaceReady = onPreviewSurfaceReady,
                 onClearRecognizedText = onClearRecognizedText,
                 onSelectMedia = onSelectMedia,
                 onSwitchToCameraPreview = onSwitchToCameraPreview,
@@ -185,7 +185,7 @@ fun MainContent(
     textInput: String,
     onTextInputChange: (String) -> Unit,
     landmarks: List<NormalizedLandmark>,
-    onPreviewViewReady: (PreviewView) -> Unit,
+    onPreviewSurfaceReady: (Preview.SurfaceProvider) -> Unit,
     onClearRecognizedText: (Boolean) -> Unit,
     onSelectMedia: (Uri) -> Unit,
     onSwitchToCameraPreview: () -> Unit,
@@ -213,7 +213,7 @@ fun MainContent(
                             cameraFacing = cameraFacing,
                             onCameraFacingChange = onCameraFacingChange,
                             landmarks = if (showLandmarks) landmarks else emptyList(),
-                            onPreviewViewReady = onPreviewViewReady,
+                            onPreviewSurfaceReady = onPreviewSurfaceReady,
                             isTorchSupported = isTorchSupported,
                             isTorchEnabled = isTorchEnabled,
                             onTorchEnabledChange = onTorchEnabledChange,
@@ -270,7 +270,7 @@ fun MainContent(
                             cameraFacing = cameraFacing,
                             onCameraFacingChange = onCameraFacingChange,
                             landmarks = if (showLandmarks) landmarks else emptyList(),
-                            onPreviewViewReady = onPreviewViewReady,
+                            onPreviewSurfaceReady = onPreviewSurfaceReady,
                             isTorchSupported = isTorchSupported,
                             isTorchEnabled = isTorchEnabled,
                             onTorchEnabledChange = onTorchEnabledChange,

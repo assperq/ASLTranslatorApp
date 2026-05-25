@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.Preview
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -57,7 +58,7 @@ fun CameraPanel(
     isTorchEnabled: Boolean,
     onTorchEnabledChange: (Boolean) -> Unit,
     landmarks: List<NormalizedLandmark>,
-    onPreviewViewReady: (PreviewView) -> Unit,
+    onPreviewSurfaceReady: (Preview.SurfaceProvider) -> Unit,
     onSelectMedia: (Uri) -> Unit
 ) {
     var controlsVisible by rememberSaveable { mutableStateOf(false) }
@@ -72,7 +73,7 @@ fun CameraPanel(
                 PreviewView(context).apply {
                     scaleType = PreviewView.ScaleType.FILL_CENTER
                     implementationMode = PreviewView.ImplementationMode.COMPATIBLE
-                    onPreviewViewReady(this)
+                    onPreviewSurfaceReady(surfaceProvider)
                 }
             }
         )
