@@ -341,22 +341,24 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
         sampleTimeMs: Long
     ) {
         val prediction = predictLetter(detectedLandmarks, liveConfidenceThreshold.value) ?: return
+
         pendingPredictions.addLast(prediction)
-        lastSampledFrameTime = sampleTimeMs
 
         while (pendingPredictions.size > SLIDING_WINDOW_SIZE) {
             pendingPredictions.removeFirst()
         }
 
-        if (pendingPredictions.size < SLIDING_WINDOW_SIZE) return
         val majorityPrediction = pendingPredictions
             .groupingBy { it.letter }
             .eachCount()
             .maxByOrNull { it.value }
 
-        if (majorityPrediction != null && majorityPrediction.value >= requiredMatches.value) {
-            lastPredictionTime = sampleTimeMs
+        if (
+            majorityPrediction != null &&
+            majorityPrediction.value >= requiredMatches.value
+        ) {
             pendingPredictions.clear()
+
             viewModelScope.launch(Dispatchers.Main) {
                 onRecognizeLetter(majorityPrediction.key)
             }
