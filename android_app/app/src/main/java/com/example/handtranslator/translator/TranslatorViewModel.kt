@@ -33,7 +33,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 class TranslatorViewModel(application: Application) : AndroidViewModel(application) {
-    private companion object { const val SLIDING_WINDOW_SIZE = 3 }
+    private companion object { const val SLIDING_WINDOW_SIZE = 10 }
 
     private val settingsRepository = TranslatorSettingsRepository(DataStoreManager(application))
     private val cameraExecutor: ExecutorService = Executors.newSingleThreadExecutor()
