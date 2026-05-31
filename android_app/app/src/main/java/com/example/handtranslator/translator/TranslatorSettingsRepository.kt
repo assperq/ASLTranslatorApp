@@ -8,6 +8,9 @@ class TranslatorSettingsRepository(
     fun predictionCooldown() = dataStoreManager.getPredictionCooldown()
     suspend fun setPredictionCooldown(value: Long) = dataStoreManager.setPredictionCooldown(value)
 
+    fun slidingWindowSize() = dataStoreManager.getSlidingWindowSize()
+    suspend fun setSlidingWindowSize(value: Int) = dataStoreManager.setSlidingWindowSize(value)
+
     fun requiredMatches() = dataStoreManager.getRequiredMatches()
     suspend fun setRequiredMatches(value: Int) = dataStoreManager.setRequiredMatches(value)
 

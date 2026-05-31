@@ -1,10 +1,17 @@
 package com.example.handtranslator.translator
 
 class PredictionStabilizer(
-    private val windowSize: Int
+    initialWindowSize: Int
 ) {
+    private var windowSize = initialWindowSize
     private val window = ArrayDeque<String>()
     private var lastSampledTimeMs = 0L
+
+    fun updateWindowSize(size: Int) {
+        if (size == windowSize) return
+        windowSize = size
+        clear()
+    }
 
     fun shouldSample(nowMs: Long, sampleIntervalMs: Long): Boolean {
         if (window.isEmpty()) return true

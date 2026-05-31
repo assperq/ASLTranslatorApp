@@ -132,6 +132,7 @@ fun SetupNavigation(
 
         composable(Routes.Preferences.route) {
             val predictionCooldown by translatorViewModel.predictionCooldown.collectAsState()
+            val slidingWindowSize by translatorViewModel.slidingWindowSize.collectAsState()
             val requiredMatches by translatorViewModel.requiredMatches.collectAsState()
             val frameSampleIntervalMs by translatorViewModel.frameSampleIntervalMs.collectAsState()
             val liveConfidenceThreshold by translatorViewModel.liveConfidenceThreshold.collectAsState()
@@ -142,6 +143,7 @@ fun SetupNavigation(
                 Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
                     PreferencesScreen(
                         predictionCooldown = predictionCooldown,
+                        slidingWindowSize = slidingWindowSize,
                         requiredMatches = requiredMatches,
                         frameSampleIntervalMs = frameSampleIntervalMs,
                         liveConfidenceThreshold = liveConfidenceThreshold,
@@ -151,6 +153,7 @@ fun SetupNavigation(
                         videoPreviewFillEnabled = videoPreviewFillEnabled,
                         singleFrameRecognitionTimeoutMs = singleFrameRecognitionTimeoutMs,
                         onPredictionCooldownChange = translatorViewModel::setPredictionCooldown,
+                        onSlidingWindowSizeChange = translatorViewModel::setSlidingWindowSize,
                         onRequiredMatchesChange = translatorViewModel::setRequiredMatches,
                         onFrameSampleIntervalMsChange = translatorViewModel::setFrameSampleIntervalMs,
                         onLiveConfidenceThresholdChange = translatorViewModel::setLiveConfidenceThreshold,

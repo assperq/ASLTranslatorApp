@@ -29,7 +29,12 @@ class DataStoreManager(private val context: Context) {
     private val PREDICTION_COOLDOWN_KEY = longPreferencesKey("prediction_cooldown_key")
 
     suspend fun setPredictionCooldown(value: Long) = save(PREDICTION_COOLDOWN_KEY, value)
-    fun getPredictionCooldown(): Flow<Long> = read(PREDICTION_COOLDOWN_KEY, 200L)
+    fun getPredictionCooldown(): Flow<Long> = read(PREDICTION_COOLDOWN_KEY, 500L)
+
+    private val SLIDING_WINDOW_SIZE_KEY = intPreferencesKey("sliding_window_size_key")
+
+    suspend fun setSlidingWindowSize(value: Int) = save(SLIDING_WINDOW_SIZE_KEY, value)
+    fun getSlidingWindowSize(): Flow<Int> = read(SLIDING_WINDOW_SIZE_KEY, 10)
 
     private val REQUIRED_MATCHES_KEY = intPreferencesKey("required_matches_key")
 
