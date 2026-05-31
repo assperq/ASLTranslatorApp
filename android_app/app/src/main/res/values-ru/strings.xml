@@ -29,6 +29,7 @@
     <string name="back_to_main">Назад на главный экран</string>
     <string name="settings_prediction_cooldown">Задержка предсказания</string>
     <string name="settings_live_section">Распознавание в реальном времени</string>
+    <string name="settings_sliding_window_size">Размер плавающего окна</string>
     <string name="settings_required_matches">Требуемые совпадения</string>
     <string name="settings_frame_interval">Интервал анализа кадров</string>
     <string name="settings_confidence_threshold">Порог уверенности</string>
@@ -42,6 +43,7 @@
     <string name="settings_info_icon_desc">Показать пояснение к настройке</string>
     <string name="settings_dialog_close">Понятно</string>
     <string name="settings_prediction_cooldown_desc">Пауза перед добавлением новой распознанной буквы. Больше значение — меньше случайных повторов.</string>
+    <string name="settings_sliding_window_size_desc">Сколько недавних прогнозов в режиме реального времени проверяется одновременно, прежде чем принять письмо. Чем больше значение, тем плавнее, но медленнее процесс.</string>
     <string name="settings_required_matches_desc">Сколько одинаковых предсказаний подряд нужно для принятия буквы. Больше значение — стабильнее, но медленнее.</string>
     <string name="settings_frame_interval_desc">Как часто анализируются кадры с камеры в Live. Меньше значение — быстрее реакция, но выше нагрузка.</string>
     <string name="settings_confidence_threshold_desc">Минимальная уверенность для Live-предсказания. Больше значение — строже и чище результат, но часть букв может пропускаться.</string>
