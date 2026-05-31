@@ -25,6 +25,7 @@ import com.example.handtranslator.translator.InputMode
 import com.example.handtranslator.translator.MainScreen
 import com.example.handtranslator.translator.TranslatorViewModel
 import com.example.handtranslator.test.AslTestScreen
+import com.example.handtranslator.test.GestureRecognitionQuizScreen
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -84,6 +85,7 @@ fun SetupNavigation(
                             translatorViewModel.onCameraFacingChange(it, lifecycleOwner)
                         },
                         recognizedText = translatorViewModel.uiState.recognizedText,
+                        practice = translatorViewModel.uiState.practice,
                         textInput = translatorViewModel.uiState.textInput,
                         onTextInputChange = translatorViewModel::onTextInputChange,
                         landmarks = translatorViewModel.uiState.landmarks,
@@ -97,6 +99,13 @@ fun SetupNavigation(
                         isTorchEnabled = translatorViewModel.uiState.isTorchEnabled,
                         isTorchSupported = translatorViewModel.uiState.isTorchSupported,
                         onClearRecognizedText = translatorViewModel::onClearRecognizedText,
+                        onStartPractice = {
+                            translatorViewModel.startPractice(lifecycleOwner, hasCameraPermission)
+                            if (!hasCameraPermission) {
+                                ensureCameraPermission()
+                            }
+                        },
+                        onStopPractice = translatorViewModel::stopPractice,
                         cameraContentMode = translatorViewModel.uiState.cameraContentMode,
                         selectedMediaUri = translatorViewModel.uiState.selectedMediaUri,
                         selectedMediaType = translatorViewModel.uiState.selectedMediaType,
@@ -161,10 +170,26 @@ fun SetupNavigation(
         composable(Routes.Test.route) {
             Scaffold { innerPadding ->
                 Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-                    AslTestScreen(onBack = { navHostController.popBackStack() })
+                    AslTestScreen(
+                        onBack = { navHostController.popBackStack() },
+                        onOpenGestureQuiz = { navHostController.navigate(Routes.GestureRecognitionQuiz.route) }
+                    )
                 }
             }
         }
 
+
+        composable(Routes.GestureRecognitionQuiz.route) {
+            Scaffold { innerPadding ->
+                Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+                    GestureRecognitionQuizScreen(
+                        onBack = { navHostController.popBackStack() },
+                        lifecycleOwner = lifecycleOwner,
+                        hasCameraPermission = hasCameraPermission,
+                        ensureCameraPermission = ensureCameraPermission
+                    )
+                }
+            }
+        }
     }
 }

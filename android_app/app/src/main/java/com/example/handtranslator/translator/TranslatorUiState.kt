@@ -18,4 +18,5 @@ data class TranslatorUiState(
     val singleFrameRecognitionResult: Letter? = null,
     val isSingleFrameRecognizing: Boolean = false,
     val singleFrameRecognitionFailed: Boolean = false,
+    val practice: PracticeUiState = PracticeUiState(),
 )

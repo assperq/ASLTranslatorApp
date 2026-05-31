@@ -57,7 +57,11 @@ import com.example.handtranslator.R
 import kotlinx.coroutines.delay
 
 @Composable
-fun AslTestScreen(onBack: () -> Unit, viewModel: AslTestViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
+fun AslTestScreen(
+    onBack: () -> Unit,
+    onOpenGestureQuiz: () -> Unit,
+    viewModel: AslTestViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+) {
     val context = LocalContext.current
     var dragOffset by remember { mutableFloatStateOf(0f) }
     var gameState by rememberSaveable { mutableStateOf(GameState.READY) }
@@ -156,6 +160,9 @@ fun AslTestScreen(onBack: () -> Unit, viewModel: AslTestViewModel = androidx.lif
             }
 
             AppStyledBestScore(bestStreak = bestStreak)
+            Button(onClick = onOpenGestureQuiz, modifier = Modifier.fillMaxWidth(0.9f)) {
+                Text(stringResource(R.string.open_gesture_quiz))
+            }
             ScorePill(stringResource(R.string.streak_current, currentStreak), MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
             TimerBar(secondsLeft = secondsLeft)
 

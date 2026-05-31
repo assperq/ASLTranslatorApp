@@ -28,7 +28,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -48,6 +51,9 @@ import com.example.handtranslator.R
 fun TranslationPanel(
     recognizedText: List<Letter>,
     onClearRecognizedText: (Boolean) -> Unit,
+    practice: PracticeUiState,
+    onStartPractice: () -> Unit,
+    onStopPractice: () -> Unit,
     modifier: Modifier = Modifier,
     compactCards: Boolean = false,
 ) {
@@ -98,7 +104,75 @@ fun TranslationPanel(
                     .heightIn(min = 120.dp, max = 220.dp)
             )
         }
+
+        PracticePanel(
+            practice = practice,
+            hasLetters = recognizedText.isNotEmpty(),
+            onStartPractice = onStartPractice,
+            onStopPractice = onStopPractice
+        )
     }
+}
+
+@Composable
+private fun PracticePanel(
+    practice: PracticeUiState,
+    hasLetters: Boolean,
+    onStartPractice: () -> Unit,
+    onStopPractice: () -> Unit,
+) {
+    Spacer(modifier = Modifier.height(10.dp))
+
+    when (practice.mode) {
+        PracticeMode.IDLE -> {
+            if (hasLetters) {
+                Button(onClick = onStartPractice, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.practice_start))
+                }
+            }
+        }
+        PracticeMode.RUNNING -> {
+            PracticeProgress(practice = practice)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                practice.currentLetter?.let { LetterCard(letter = it, compact = true) }
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(stringResource(R.string.practice_show_letter, practice.currentLetter?.name.orEmpty()), style = MaterialTheme.typography.titleMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                    PracticeMessageText(practice.message)
+                    OutlinedButton(onClick = onStopPractice) { Text(stringResource(R.string.practice_stop)) }
+                }
+            }
+        }
+        PracticeMode.FINISHED -> {
+            PracticeProgress(practice = practice)
+            Text(stringResource(R.string.practice_finished), style = MaterialTheme.typography.titleMedium, color = Color(0xFF1E7F41))
+            Text(stringResource(R.string.practice_stats, practice.totalCount, practice.errorCount, practice.successPercent, practice.elapsedMs / 1000))
+            Button(onClick = onStartPractice, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.practice_restart))
+            }
+        }
+    }
+}
+
+@Composable
+private fun PracticeProgress(practice: PracticeUiState) {
+    Text(stringResource(R.string.practice_progress, practice.completedCount, practice.totalCount), style = MaterialTheme.typography.labelLarge)
+    LinearProgressIndicator(progress = { practice.progress }, modifier = Modifier.fillMaxWidth())
+}
+
+@Composable
+private fun PracticeMessageText(message: PracticeMessage?) {
+    val text = when (message?.type) {
+        PracticeMessageType.CORRECT -> stringResource(R.string.practice_correct)
+        PracticeMessageType.WRONG -> stringResource(R.string.practice_wrong, message.expected.orEmpty(), message.actual.orEmpty())
+        PracticeMessageType.FINISHED -> stringResource(R.string.practice_finished)
+        null -> stringResource(R.string.practice_camera_hint)
+    }
+    val color = when (message?.type) {
+        PracticeMessageType.CORRECT, PracticeMessageType.FINISHED -> Color(0xFF1E7F41)
+        PracticeMessageType.WRONG -> Color(0xFF9D1D1D)
+        null -> MaterialTheme.colorScheme.secondary
+    }
+    Text(text = text, color = color, style = MaterialTheme.typography.bodyMedium)
 }
 
 @Composable
