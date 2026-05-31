@@ -56,23 +56,25 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
     var uiState by mutableStateOf(TranslatorUiState())
         private set
 
-    val predictionCooldown = settingsRepository.predictionCooldown().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 400L)
+    val predictionCooldown = settingsRepository.predictionCooldown().stateIn(viewModelScope, SharingStarted.Eagerly, 500L)
     fun setPredictionCooldown(v: Long) = viewModelScope.launch(Dispatchers.IO) { settingsRepository.setPredictionCooldown(v) }
-    val requiredMatches = settingsRepository.requiredMatches().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 2)
+    val slidingWindowSize = settingsRepository.slidingWindowSize().stateIn(viewModelScope, SharingStarted.Eagerly, 10)
+    fun setSlidingWindowSize(v: Int) = viewModelScope.launch(Dispatchers.IO) { settingsRepository.setSlidingWindowSize(v) }
+    val requiredMatches = settingsRepository.requiredMatches().stateIn(viewModelScope, SharingStarted.Eagerly, 2)
     fun setRequiredMatches(v: Int) = viewModelScope.launch(Dispatchers.IO) { settingsRepository.setRequiredMatches(v) }
-    val frameSampleIntervalMs = settingsRepository.frameSampleIntervalMs().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 90L)
+    val frameSampleIntervalMs = settingsRepository.frameSampleIntervalMs().stateIn(viewModelScope, SharingStarted.Eagerly, 90L)
     fun setFrameSampleIntervalMs(v: Long) = viewModelScope.launch(Dispatchers.IO) { settingsRepository.setFrameSampleIntervalMs(v) }
-    val liveConfidenceThreshold = settingsRepository.liveConfidenceThreshold().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.45f)
+    val liveConfidenceThreshold = settingsRepository.liveConfidenceThreshold().stateIn(viewModelScope, SharingStarted.Eagerly, 0.45f)
     fun setLiveConfidenceThreshold(v: Float) = viewModelScope.launch(Dispatchers.IO) { settingsRepository.setLiveConfidenceThreshold(v) }
-    val photoConfidenceThreshold = settingsRepository.photoConfidenceThreshold().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.35f)
+    val photoConfidenceThreshold = settingsRepository.photoConfidenceThreshold().stateIn(viewModelScope, SharingStarted.Eagerly, 0.35f)
     fun setPhotoConfidenceThreshold(v: Float) = viewModelScope.launch(Dispatchers.IO) { settingsRepository.setPhotoConfidenceThreshold(v) }
-    val videoConfidenceThreshold = settingsRepository.videoConfidenceThreshold().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.2f)
+    val videoConfidenceThreshold = settingsRepository.videoConfidenceThreshold().stateIn(viewModelScope, SharingStarted.Eagerly, 0.2f)
     fun setVideoConfidenceThreshold(v: Float) = viewModelScope.launch(Dispatchers.IO) { settingsRepository.setVideoConfidenceThreshold(v) }
-    val videoFrameSampleIntervalMs = settingsRepository.videoFrameSampleIntervalMs().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 1500L)
+    val videoFrameSampleIntervalMs = settingsRepository.videoFrameSampleIntervalMs().stateIn(viewModelScope, SharingStarted.Eagerly, 1500L)
     fun setVideoFrameSampleIntervalMs(v: Long) = viewModelScope.launch(Dispatchers.IO) { settingsRepository.setVideoFrameSampleIntervalMs(v) }
-    val videoPreviewFillEnabled = settingsRepository.videoPreviewFillEnabled().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+    val videoPreviewFillEnabled = settingsRepository.videoPreviewFillEnabled().stateIn(viewModelScope, SharingStarted.Eagerly, false)
     fun setVideoPreviewFillEnabled(v: Boolean) = viewModelScope.launch(Dispatchers.IO) { settingsRepository.setVideoPreviewFillEnabled(v) }
-    val singleFrameRecognitionTimeoutMs = settingsRepository.singleFrameRecognitionTimeoutMs().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 2500L)
+    val singleFrameRecognitionTimeoutMs = settingsRepository.singleFrameRecognitionTimeoutMs().stateIn(viewModelScope, SharingStarted.Eagerly, 2500L)
     fun setSingleFrameRecognitionTimeoutMs(v: Long) = viewModelScope.launch(Dispatchers.IO) { settingsRepository.setSingleFrameRecognitionTimeoutMs(v) }
 
     fun onInputModeChange(mode: InputMode, lifecycleOwner: LifecycleOwner, hasCameraPermission: Boolean) {
@@ -182,6 +184,7 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
             uiState = uiState.copy(landmarks = detectedLandmarks)
             if (detectedLandmarks.isEmpty()) { stabilizer.clear(); return }
             val now = System.currentTimeMillis()
+            stabilizer.updateWindowSize(slidingWindowSize.value)
             if (now - lastPredictionTime < predictionCooldown.value) return
             if (!stabilizer.shouldSample(now, frameSampleIntervalMs.value)) return
             val prediction = recognitionManager.recognize(detectedLandmarks, liveConfidenceThreshold.value) ?: return

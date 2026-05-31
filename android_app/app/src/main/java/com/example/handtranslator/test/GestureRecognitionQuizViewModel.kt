@@ -13,32 +13,32 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.viewModelScope
 import com.example.handtranslator.AslClassifier
 import com.example.handtranslator.HandLandmarkerHelper
 import com.example.handtranslator.Helper.loadAslLabels
+import com.example.handtranslator.data.preferences.DataStoreManager
 import com.example.handtranslator.translator.CameraFacing
 import com.example.handtranslator.translator.GestureRecognitionEngine
 import com.example.handtranslator.translator.PredictionStabilizer
 import com.example.handtranslator.translator.RecognitionManager
+import com.example.handtranslator.translator.TranslatorSettingsRepository
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 class GestureRecognitionQuizViewModel(application: Application) : AndroidViewModel(application) {
-    private companion object {
-        const val SLIDING_WINDOW_SIZE = 10
-        const val REQUIRED_MATCHES = 2
-        const val FRAME_SAMPLE_INTERVAL_MS = 90L
-        const val PREDICTION_COOLDOWN_MS = 500L
-        const val CONFIDENCE_THRESHOLD = 0.45f
-    }
+    private companion object { const val DEFAULT_SLIDING_WINDOW_SIZE = 10 }
 
+    private val settingsRepository = TranslatorSettingsRepository(DataStoreManager(application))
     private val cameraExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private val classifier = AslClassifier(application.applicationContext)
     private val recognitionManager = RecognitionManager(
         handLandmarker = HandLandmarkerHelper(application.applicationContext),
         engine = GestureRecognitionEngine(classifier, loadAslLabels(application.applicationContext))
     )
-    private val stabilizer = PredictionStabilizer(SLIDING_WINDOW_SIZE)
+    private val stabilizer = PredictionStabilizer(DEFAULT_SLIDING_WINDOW_SIZE)
     private val remainingLetters = mutableListOf<String>()
 
     private var cameraProvider: ProcessCameraProvider? = null
@@ -48,6 +48,12 @@ class GestureRecognitionQuizViewModel(application: Application) : AndroidViewMod
 
     var uiState by mutableStateOf(GestureRecognitionQuizUiState())
         private set
+
+    private val predictionCooldown = settingsRepository.predictionCooldown().stateIn(viewModelScope, SharingStarted.Eagerly, 500L)
+    private val slidingWindowSize = settingsRepository.slidingWindowSize().stateIn(viewModelScope, SharingStarted.Eagerly, DEFAULT_SLIDING_WINDOW_SIZE)
+    private val requiredMatches = settingsRepository.requiredMatches().stateIn(viewModelScope, SharingStarted.Eagerly, 2)
+    private val frameSampleIntervalMs = settingsRepository.frameSampleIntervalMs().stateIn(viewModelScope, SharingStarted.Eagerly, 90L)
+    private val liveConfidenceThreshold = settingsRepository.liveConfidenceThreshold().stateIn(viewModelScope, SharingStarted.Eagerly, 0.45f)
 
     fun start(lifecycleOwner: LifecycleOwner, hasCameraPermission: Boolean) {
         remainingLetters.clear()
@@ -111,11 +117,12 @@ class GestureRecognitionQuizViewModel(application: Application) : AndroidViewMod
                 return
             }
             val now = System.currentTimeMillis()
-            if (now - lastPredictionTime < PREDICTION_COOLDOWN_MS) return
-            if (!stabilizer.shouldSample(now, FRAME_SAMPLE_INTERVAL_MS)) return
-            val prediction = recognitionManager.recognize(detectedLandmarks, CONFIDENCE_THRESHOLD) ?: return
+            stabilizer.updateWindowSize(slidingWindowSize.value)
+            if (now - lastPredictionTime < predictionCooldown.value) return
+            if (!stabilizer.shouldSample(now, frameSampleIntervalMs.value)) return
+            val prediction = recognitionManager.recognize(detectedLandmarks, liveConfidenceThreshold.value) ?: return
             stabilizer.add(prediction.letter, now)
-            stabilizer.resolve(REQUIRED_MATCHES)?.let { stableLetter ->
+            stabilizer.resolve(requiredMatches.value)?.let { stableLetter ->
                 lastPredictionTime = now
                 handlePrediction(stableLetter)
             }

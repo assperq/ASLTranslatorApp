@@ -36,6 +36,7 @@ import com.example.handtranslator.R
 @Composable
 fun PreferencesScreen(
     predictionCooldown: Long,
+    slidingWindowSize: Int,
     requiredMatches: Int,
     frameSampleIntervalMs: Long,
     liveConfidenceThreshold: Float,
@@ -45,6 +46,7 @@ fun PreferencesScreen(
     videoPreviewFillEnabled: Boolean,
     singleFrameRecognitionTimeoutMs: Long,
     onPredictionCooldownChange: (Long) -> Unit,
+    onSlidingWindowSizeChange: (Int) -> Unit,
     onRequiredMatchesChange: (Int) -> Unit,
     onFrameSampleIntervalMsChange: (Long) -> Unit,
     onLiveConfidenceThresholdChange: (Float) -> Unit,
@@ -78,6 +80,17 @@ fun PreferencesScreen(
                 onValueChange = { onPredictionCooldownChange(it.toLong()) },
                 descriptionTitle = stringResource(R.string.settings_prediction_cooldown),
                 descriptionText = stringResource(R.string.settings_prediction_cooldown_desc)
+            )
+
+            SettingsSliderCard(
+                title = stringResource(R.string.settings_sliding_window_size),
+                value = slidingWindowSize.toString(),
+                sliderValue = slidingWindowSize.toFloat(),
+                valueRange = 6f..20f,
+                steps = 13,
+                onValueChange = { onSlidingWindowSizeChange(it.toInt()) },
+                descriptionTitle = stringResource(R.string.settings_sliding_window_size),
+                descriptionText = stringResource(R.string.settings_sliding_window_size_desc)
             )
 
             SettingsSliderCard(

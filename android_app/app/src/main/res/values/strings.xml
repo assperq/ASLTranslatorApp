@@ -29,6 +29,7 @@
     <string name="back_to_main">Back to main screen</string>
     <string name="settings_prediction_cooldown">Prediction cooldown</string>
     <string name="settings_live_section">Live recognition</string>
+    <string name="settings_sliding_window_size">Sliding window size</string>
     <string name="settings_required_matches">Required matches</string>
     <string name="settings_frame_interval">Frame sample interval</string>
     <string name="settings_confidence_threshold">Live confidence threshold</string>
@@ -41,8 +42,9 @@
     <string name="settings_video_fill">Fill frame (crop)</string>
     <string name="settings_info_icon_desc">Show setting explanation</string>
     <string name="settings_dialog_close">Got it</string>
-    <string name="settings_prediction_cooldown_desc">How long the app waits before adding a new recognized letter. Bigger value = fewer accidental repeats.</string>
-    <string name="settings_required_matches_desc">How many same predictions in a row are needed before letter is accepted. Bigger value = more stable, but slower.</string>
+    <string name="settings_prediction_cooldown_desc">How long the app waits before accepting the next live recognition. Bigger value = fewer accidental repeats.</string>
+    <string name="settings_sliding_window_size_desc">How many recent live predictions are checked together before accepting a letter. Bigger value = smoother, but slower.</string>
+    <string name="settings_required_matches_desc">How many matching predictions inside the window are needed before a letter is accepted. Bigger value = more stable, but slower.</string>
     <string name="settings_frame_interval_desc">How often live camera frames are analyzed. Smaller value = faster reaction, but more device load.</string>
     <string name="settings_confidence_threshold_desc">Minimum confidence for live prediction. Bigger value = stricter and cleaner results, but may skip some letters.</string>
     <string name="settings_photo_confidence_threshold_desc">Main confidence threshold for recognition from photos. Increase it if wrong letters appear too often.</string>
