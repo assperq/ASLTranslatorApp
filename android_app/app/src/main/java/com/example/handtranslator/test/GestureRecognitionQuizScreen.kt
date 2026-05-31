@@ -132,7 +132,7 @@ private fun PlayingQuizContent(
         }
     }
 
-    Surface(modifier = Modifier.fillMaxWidth().weight(1f), tonalElevation = 4.dp, shape = RoundedCornerShape(20.dp)) {
+    Surface(modifier = Modifier.fillMaxWidth(), tonalElevation = 4.dp, shape = RoundedCornerShape(20.dp)) {
         CameraPanel(
             showLandmarks = uiState.showLandmarks,
             onShowLandmarksChange = onShowLandmarksChange,

@@ -57,7 +57,7 @@ fun TranslationPanel(
     modifier: Modifier = Modifier,
     compactCards: Boolean = false,
 ) {
-    Column(
+    LazyColumn(
         modifier = modifier
             .fillMaxSize()
             .heightIn(min = 140.dp, max = 260.dp)
@@ -65,52 +65,54 @@ fun TranslationPanel(
             .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp))
             .padding(12.dp)
     ) {
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = stringResource(R.string.translation_title),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.weight(1f)
-            )
+        item {
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(R.string.translation_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f)
+                )
 
-            if (recognizedText.isNotEmpty()) {
-                IconButton(onClick = { onClearRecognizedText(true) }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Backspace,
-                        contentDescription = stringResource(R.string.delete_last_symbol)
-                    )
-                }
-                IconButton(onClick = { onClearRecognizedText(false) }) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.clear_all)
-                    )
+                if (recognizedText.isNotEmpty()) {
+                    IconButton(onClick = { onClearRecognizedText(true) }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Backspace,
+                            contentDescription = stringResource(R.string.delete_last_symbol)
+                        )
+                    }
+                    IconButton(onClick = { onClearRecognizedText(false) }) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = stringResource(R.string.clear_all)
+                        )
+                    }
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(8.dp))
-        if (recognizedText.isEmpty()) {
-            Text(
-                text = stringResource(R.string.translation_empty),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.secondary
-            )
-        } else {
-            RecognizedTextScrollableRow(
-                recognizedText = recognizedText,
-                compactCards = compactCards,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 120.dp, max = 220.dp)
+            Spacer(modifier = Modifier.height(8.dp))
+            if (recognizedText.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.translation_empty),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            } else {
+                RecognizedTextScrollableRow(
+                    recognizedText = recognizedText,
+                    compactCards = compactCards,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 120.dp, max = 220.dp)
+                )
+            }
+
+            PracticePanel(
+                practice = practice,
+                hasLetters = recognizedText.isNotEmpty(),
+                onStartPractice = onStartPractice,
+                onStopPractice = onStopPractice
             )
         }
-
-        PracticePanel(
-            practice = practice,
-            hasLetters = recognizedText.isNotEmpty(),
-            onStartPractice = onStartPractice,
-            onStopPractice = onStopPractice
-        )
     }
 }
 
