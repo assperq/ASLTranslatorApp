@@ -45,6 +45,7 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
     )
     private val stabilizer = PredictionStabilizer(SLIDING_WINDOW_SIZE)
     private val videoExtractor = VideoFrameExtractor(application)
+    private val practiceSessionManager = PracticeSessionManager()
 
     private var cameraProvider: ProcessCameraProvider? = null
     private var activeCamera: Camera? = null
@@ -101,11 +102,39 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun onShowLandmarksChange(show: Boolean) { uiState = uiState.copy(showLandmarks = show) }
-    fun onClearRecognizedText(oneLetter: Boolean) { uiState = uiState.copy(recognizedText = if (oneLetter) uiState.recognizedText.dropLast(1) else emptyList()) }
-    fun onTextInputChange(text: String) { uiState = uiState.copy(textInput = text, recognizedText = text.map { ch -> ch.toString().let { Letter(it, getAslDrawable(getApplication(), it)) } }) }
+    fun onClearRecognizedText(oneLetter: Boolean) {
+        uiState = uiState.copy(
+            recognizedText = if (oneLetter) uiState.recognizedText.dropLast(1) else emptyList(),
+            practice = PracticeUiState()
+        )
+    }
+    fun onTextInputChange(text: String) {
+        uiState = uiState.copy(
+            textInput = text,
+            recognizedText = text.toAslLetters(),
+            practice = PracticeUiState(totalCount = text.countPracticeLetters())
+        )
+    }
+
+    fun startPractice(lifecycleOwner: LifecycleOwner, hasCameraPermission: Boolean) {
+        val snapshot = practiceSessionManager.start(uiState.textInput)
+        uiState = uiState.copy(
+            inputMode = InputMode.CAMERA,
+            cameraContentMode = CameraContentMode.LIVE_CAMERA,
+            practice = snapshot.toPracticeUiState(PracticeMode.RUNNING, null)
+        )
+        stabilizer.clear()
+        if (hasCameraPermission) bindCameraUseCases(lifecycleOwner)
+    }
+
+    fun stopPractice() {
+        val snapshot = practiceSessionManager.cancel()
+        uiState = uiState.copy(practice = snapshot.toPracticeUiState(PracticeMode.IDLE, null))
+        stabilizer.clear()
+    }
 
     fun onSelectMedia(uri: Uri) {
-        uiState = uiState.copy(selectedMediaUri = uri, selectedMediaType = resolveMediaType(uri), cameraContentMode = CameraContentMode.SELECTED_MEDIA, recognizedText = emptyList())
+        uiState = uiState.copy(selectedMediaUri = uri, selectedMediaType = resolveMediaType(uri), cameraContentMode = CameraContentMode.SELECTED_MEDIA, recognizedText = emptyList(), practice = PracticeUiState())
         clearCameraFlow()
         mediaProcessingJob?.cancel()
         when (uiState.selectedMediaType) {
@@ -166,8 +195,28 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     private fun onRecognizeLetter(letter: String) {
+        if (uiState.practice.mode == PracticeMode.RUNNING) {
+            handlePracticePrediction(letter)
+            return
+        }
+
         runCatching { Letter(letter, getAslDrawable(getApplication(), letter)) }
             .onSuccess { uiState = uiState.copy(recognizedText = uiState.recognizedText + it) }
+    }
+
+    private fun handlePracticePrediction(letter: String) {
+        val result = practiceSessionManager.submitPrediction(letter)
+        val message = when (result) {
+            is PracticeCheckResult.Correct -> {
+                if (result.snapshot.isFinished) PracticeMessage(PracticeMessageType.FINISHED)
+                else PracticeMessage(PracticeMessageType.CORRECT)
+            }
+            is PracticeCheckResult.Wrong -> PracticeMessage(PracticeMessageType.WRONG, result.expected, result.actual)
+            is PracticeCheckResult.AlreadyFinished -> PracticeMessage(PracticeMessageType.FINISHED)
+        }
+        val mode = if (result.snapshot.isFinished) PracticeMode.FINISHED else PracticeMode.RUNNING
+        uiState = uiState.copy(practice = result.snapshot.toPracticeUiState(mode, message))
+        stabilizer.clear()
     }
 
     private fun processPhoto(uri: Uri) {
@@ -217,6 +266,25 @@ class TranslatorViewModel(application: Application) : AndroidViewModel(applicati
 
     private fun clearCameraFlow() { stopCamera(); mediaProcessingJob?.cancel(); uiState = uiState.copy(landmarks = emptyList()); stabilizer.clear() }
     private fun resolveMediaType(uri: Uri): SelectedMediaType { val mime = getApplication<Application>().contentResolver.getType(uri).orEmpty(); return when { mime.startsWith("image/") -> SelectedMediaType.PHOTO; mime.startsWith("video/") -> SelectedMediaType.VIDEO; else -> SelectedMediaType.NONE } }
+
+    private fun String.toAslLetters(): List<Letter> = mapNotNull { ch ->
+        val value = ch.uppercaseChar()
+        if (value in 'A'..'Z') value.toString().let { Letter(it, getAslDrawable(getApplication(), it)) } else null
+    }
+
+    private fun String.countPracticeLetters(): Int = count { it.uppercaseChar() in 'A'..'Z' }
+
+    private fun PracticeSessionSnapshot.toPracticeUiState(mode: PracticeMode, message: PracticeMessage?): PracticeUiState = PracticeUiState(
+        mode = if (isFinished && mode == PracticeMode.RUNNING) PracticeMode.FINISHED else mode,
+        currentLetter = currentLetter?.let { Letter(it, getAslDrawable(getApplication(), it)) },
+        completedCount = completedCount,
+        totalCount = totalCount,
+        errorCount = errorCount,
+        progress = progress,
+        successPercent = successPercent,
+        elapsedMs = elapsedMs,
+        message = message
+    )
 
     override fun onCleared() {
         super.onCleared()

@@ -72,4 +72,25 @@
     <string name="game_ready_subtitle">Нажмите Старт, чтобы начать новую сессию</string>
     <string name="game_start_button">Старт</string>
     <string name="game_ready_after_reset">Раунд завершен. Нажмите Старт, чтобы начать снова</string>
+    <string name="practice_start">Начать практику</string>
+    <string name="practice_restart">Повторить</string>
+    <string name="practice_stop">Остановить практику</string>
+    <string name="practice_show_letter">Покажите букву: %1$s</string>
+    <string name="practice_camera_hint">Покажите текущий жест в камеру.</string>
+    <string name="practice_correct">Верно! Переходим к следующей букве.</string>
+    <string name="practice_wrong">Попробуйте снова. Ожидалось %1$s, распознано %2$s.</string>
+    <string name="practice_finished">Практика завершена!</string>
+    <string name="practice_progress">Прогресс: %1$d/%2$d</string>
+    <string name="practice_stats">Букв: %1$d • Ошибок: %2$d • Успех: %3$d%% • Время: %4$d с</string>
+    <string name="open_gesture_quiz">Тест распознавания жестов</string>
+    <string name="gesture_quiz_title">Тест распознавания жестов</string>
+    <string name="gesture_quiz_ready_title">Отвечайте жестами</string>
+    <string name="gesture_quiz_ready_subtitle">Приложение покажет букву. Покажите соответствующий ASL-жест в камеру.</string>
+    <string name="gesture_quiz_show_letter">Покажите эту букву</string>
+    <string name="gesture_quiz_camera_hint">Ждём стабильный жест…</string>
+    <string name="gesture_quiz_wrong">Распознано %1$s. Попробуйте эту же букву ещё раз.</string>
+    <string name="gesture_quiz_score">Счёт: %1$d • Вопрос %2$d/%3$d</string>
+    <string name="gesture_quiz_finished">Тест завершён!</string>
+    <string name="gesture_quiz_result">Счёт: %1$d/%2$d • Ошибок: %3$d</string>
+
 </resources>

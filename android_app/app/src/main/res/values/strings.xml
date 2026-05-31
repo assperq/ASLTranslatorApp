@@ -72,4 +72,25 @@
     <string name="game_ready_subtitle">Press Start to begin a new session</string>
     <string name="game_start_button">Start game</string>
     <string name="game_ready_after_reset">Round ended. Press Start to try again</string>
+    <string name="practice_start">Start practice</string>
+    <string name="practice_restart">Try again</string>
+    <string name="practice_stop">Stop practice</string>
+    <string name="practice_show_letter">Show letter: %1$s</string>
+    <string name="practice_camera_hint">Show the current gesture to the camera.</string>
+    <string name="practice_correct">Correct! Moving to the next letter.</string>
+    <string name="practice_wrong">Try again. Expected %1$s, recognized %2$s.</string>
+    <string name="practice_finished">Practice complete!</string>
+    <string name="practice_progress">Progress: %1$d/%2$d</string>
+    <string name="practice_stats">Letters: %1$d • Errors: %2$d • Success: %3$d%% • Time: %4$d s</string>
+    <string name="open_gesture_quiz">Practice gesture recognition quiz</string>
+    <string name="gesture_quiz_title">Gesture recognition quiz</string>
+    <string name="gesture_quiz_ready_title">Show gestures to answer</string>
+    <string name="gesture_quiz_ready_subtitle">The app shows a letter. Make the matching ASL gesture in front of the camera.</string>
+    <string name="gesture_quiz_show_letter">Show this letter</string>
+    <string name="gesture_quiz_camera_hint">Waiting for a stable gesture…</string>
+    <string name="gesture_quiz_wrong">Recognized %1$s. Try the same letter again.</string>
+    <string name="gesture_quiz_score">Score: %1$d • Question %2$d/%3$d</string>
+    <string name="gesture_quiz_finished">Quiz complete!</string>
+    <string name="gesture_quiz_result">Score: %1$d/%2$d • Mistakes: %3$d</string>
+
 </resources>
